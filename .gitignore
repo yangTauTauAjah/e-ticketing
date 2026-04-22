@@ -1,0 +1,85 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_export_environment.sh
+
+# Generated files
+lib/generated/
+lib/generated_plugin_registrant.dart
+*.g.dart
+*.config.dart
+*.freezed.dart
+
+# iOS
+ios/.symlinks/
+ios/.generated/
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
+ios/Flutter/Flutter.xcframework/
+ios/Flutter/engine/
+ios/Flutter/ephemeral/
+ios/Flutter/.last_build_id
+ios/Podfile.lock
+ios/Pods/
+
+# Android
+android/.gradle
+android/.gradle/
+android/build/
+android/local.properties
+android/gradle.properties
+android/.DS_Store
+android/app/debug
+android/app/profile
+android/app/release
+
+# macOS
+macos/.dart_tool/
+macos/Flutter/Flutter-Release.xcconfig
+macos/Flutter/GeneratedPluginRegistrant.dart
+macos/Flutter/ephemeral/
+macos/Pods/
+macos/Podfile.lock
+
+# Linux
+linux/flutter/ephemeral/
+
+# Windows
+windows/flutter/ephemeral/
+
+# Web
+web/flutter_service_worker.js
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+*.iws
+*.ipr
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Misc
+*.log
+*.pyc
