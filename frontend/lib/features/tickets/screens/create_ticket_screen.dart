@@ -212,11 +212,13 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 icon: _isLoading 
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Icon(LucideIcons.send, size: 18, color: Colors.white),
-                label: Text(_isLoading ? "SYNCHRONIZING..." : "SUBMIT RECORD"),
+                label: Text(_isLoading ? "Synchronizing..." : "Submit Record", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0F172A),
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  elevation: 4,
+                  shadowColor: Colors.black.withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -240,6 +242,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       children: [
         Container(
           decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -255,8 +258,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             onChanged: (_) => setState(() => _validateInputs()),
             decoration: InputDecoration(
               hintText: hint,
-              filled: true,
-              fillColor: Colors.white,
+              hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
+              // filled: true,
+              // fillColor: Colors.white,
               errorText: error,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -282,14 +286,6 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             ),
           ),
         ),
-        /* if (error != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              error,
-              style: TextStyle(color: Colors.red.shade600, fontSize: 12, fontWeight: FontWeight.w500),
-            ),
-          ), */
       ],
     );
   }

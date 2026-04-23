@@ -60,14 +60,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           controller: _emailController
         ),
         const SizedBox(height: 32),
-          SizedBox(
+        SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: _isLoading ? null : _handleReset,
             icon: _isLoading 
               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : const Icon(LucideIcons.send, size: 18, color: Colors.white),
-            label: Text(_isLoading ? "SENDING REQUEST..." : "SEND RESET LINK"),
+            label: Text(_isLoading ? "Sending Request..." : "Send Reset Link", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0F172A),
               padding: const EdgeInsets.symmetric(vertical: 24),

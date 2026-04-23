@@ -177,19 +177,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   data: (_) => const Text(
-                    "CREATE ACCOUNT",
+                    "Create Account",
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
+                      fontSize: 16
                     ),
                   ),
                   error: (_, __) => const Text(
-                    "CREATE ACCOUNT",
+                    "Create Account",
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
+                      fontSize: 16
                     ),
                   ),
                 ),

@@ -55,40 +55,77 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(32.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [            const SizedBox(height: 60),
-            // Logo from Screenshot
-            Container(
-              height: 48, width: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F172A), 
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  )
-                ],
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 60),
+            // Logo from Screenshot - Centered and Rotated
+            Transform.rotate(
+              angle: 0.15, // Slight rotation in radians (~8.6 degrees)
+              child: Container(
+                height: 100, width: 100,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A), 
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Center(child: Container(height: 40, width: 40, decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(8)))),
               ),
-              child: Center(child: Container(height: 20, width: 20, decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(4)))),
             ),
             const SizedBox(height: 40),
-            const Text("SECURE ACCESS", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)),
+            const Text("Secure Access", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)),
             const Text("Sign in to E-Ticket", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), letterSpacing: -1)),
             const SizedBox(height: 40),
-              AuthTextField(label: "Email Address", hint: "name@company.com", icon: LucideIcons.mail, controller: emailController),
+            AuthTextField(label: "Email Address", hint: "name@company.com", icon: LucideIcons.mail, controller: emailController),
             const SizedBox(height: 24),
-            AuthTextField(label: "Password", hint: "••••••••", icon: LucideIcons.lock, isPassword: true, controller: passController),
-              // Forgot Password Link
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const ResetPasswordScreen()));
-                },
-                child: const Text("Forgot password?", style: TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Password", style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1.5)),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ResetPasswordScreen()));
+                      },
+                      child: const Text("Forgot password?", style: TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                    ),
+                  ]
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF1F5F9)), // slate-100
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: TextField(
+                    controller: passController,
+                    obscureText: true,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(LucideIcons.lock, size: 18, color: const Color(0xFF94A3B8)),
+                      hintText: "••••••••",
+                      hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 18),
+                    ),
+                  ),
+                ),
+              ],
             ),
             
             const SizedBox(height: 32),

@@ -12,10 +12,8 @@ final ticketDetailProvider = FutureProvider.family<Ticket, String>((ref, id) asy
   try {
     final dio = ref.read(dioProvider).instance;
     final response = await dio.get('${ApiConstants.tickets}/$id');
-    print("Fetched ticket details: ${response.data}");
     return Ticket.fromJson(response.data['data']['ticket']);
   } catch (e) {
-    print("Error fetching ticket details: $e");
     throw Exception("Failed to load ticket details");
   }
 });
@@ -53,11 +51,10 @@ class TicketDetailScreen extends ConsumerWidget {
                       style: TextStyle(color: Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
                     Text("Case ID #${ticket.id.substring(0, 8).toUpperCase()}", 
                       style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 32),
-                    const Text("SUBJECT HEADER", 
-                      style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
-                    Text(ticket.title, 
-                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
+                    const Text("SUBJECT HEADER", style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                    Text(ticket.title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 24),
                     const Divider(color: Colors.white10),
                     const SizedBox(height: 24),
                     // 2x2 Grid for Ticket Details
@@ -65,16 +62,18 @@ class TicketDetailScreen extends ConsumerWidget {
                       crossAxisCount: 2,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 1.8,
+                      mainAxisSpacing: 24,
+                      crossAxisSpacing: 0,
+                      childAspectRatio: 4.0,
                       children: [
                         _buildInfoTile("REPORTER", ticket.createdByName),
                         _buildInfoTile("PRIORITY", ticket.priority.name.toUpperCase(), isPriority: true),
                         _buildInfoTile("CATEGORY", ticket.category.name.replaceAll('_', ' ').toUpperCase()),
                         _buildInfoTile("CREATED AT", ticket.createdAt.toString().split(' ')[0]),
                       ],
-                    ),                    const Divider(color: Colors.white10),
+                    ),
+                    const SizedBox(height: 24),
+                    const Divider(color: Colors.white10),
                     const SizedBox(height: 24),
 
                     // Description Section
