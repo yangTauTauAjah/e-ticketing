@@ -67,7 +67,7 @@ const schemas = {
     priority: Joi.string()
       .valid('low', 'medium', 'high', 'critical')
       .optional(),
-    assignedToId: Joi.string().uuid().optional()
+    assignedToId: Joi.string().uuid().allow(null).optional()
   }).min(1),
 
   createComment: Joi.object({

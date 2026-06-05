@@ -1,6 +1,7 @@
 const Ticket = require('../models/Ticket');
 const Attachment = require('../models/Attachment');
 const Comment = require('../models/Comment');
+const User = require('../models/User');
 const logger = require('../utils/logger');
 
 class TicketController {
@@ -84,7 +85,7 @@ class TicketController {
         });
       }
 
-      // Check authorization
+      // Users can only view their own tickets
       if (userRole === 'user' && ticket.created_by_id !== userId) {
         return res.status(403).json({
           success: false,
@@ -93,23 +94,24 @@ class TicketController {
         });
       }
 
-      // Get attachments and comments
       const attachments = await Attachment.findByTicket(ticketId);
       const comments = await Comment.findByTicket(ticketId);
 
-      // Filter internal comments if user is not helpdesk/admin
-      let filteredComments = comments.map(c => ({
-        "id": c.id,
-        "content": c.content,
-        "authorId": c.author_id,
-        "authorName": c.author.name,
-        "createdAt": c.created_at,
-        "updatedAt": c.updated_at,
-        "attachments": c.attachments || []
+      // Users cannot see internal comments
+      const visibleComments = userRole === 'user'
+        ? comments.filter(c => !c.is_internal)
+        : comments;
+
+      const mappedComments = visibleComments.map(c => ({
+        id: c.id,
+        content: c.content,
+        authorId: c.author_id,
+        authorName: c.author.name,
+        isInternal: c.is_internal,
+        createdAt: c.created_at,
+        updatedAt: c.updated_at,
+        attachments: c.attachments || []
       }));
-      if (userRole === 'user') {
-        filteredComments = comments.filter(c => !c.is_internal);
-      }
 
       res.status(200).json({
         success: true,
@@ -124,11 +126,11 @@ class TicketController {
             createdById: ticket.created_by_id,
             createdByName: ticket.created_by?.name,
             assignedToId: ticket.assigned_to_id,
-            assignedToName: ticket.assigned_to?.name,
+            assignedToName: ticket.assigned_to?.name ?? null,
             createdAt: ticket.created_at,
             updatedAt: ticket.updated_at,
             attachments,
-            comments: filteredComments
+            comments: mappedComments
           }
         }
       });
@@ -145,13 +147,27 @@ class TicketController {
       const userId = req.user.sub;
       const userRole = req.user.role;
 
-      // Check authorization - only helpdesk/admin can update
-      if (userRole !== 'admin') {
+      // Only admin and helpdesk can update tickets
+      if (userRole !== 'admin' && userRole !== 'helpdesk') {
         return res.status(403).json({
           success: false,
           message: 'You do not have permission to update tickets',
           error: { code: 'INSUFFICIENT_PERMISSIONS' }
         });
+      }
+
+      // Helpdesk may only update status
+      if (userRole === 'helpdesk') {
+        const attemptedAdminFields = [priority, assignedToId].some(
+          (v) => v !== undefined
+        );
+        if (attemptedAdminFields) {
+          return res.status(403).json({
+            success: false,
+            message: 'Helpdesk users may only update ticket status',
+            error: { code: 'INSUFFICIENT_PERMISSIONS' }
+          });
+        }
       }
 
       const ticket = await Ticket.findById(ticketId);
@@ -163,7 +179,18 @@ class TicketController {
         });
       }
 
-      // Update ticket
+      // Validate that assignedToId targets a helpdesk-role user (admin only path)
+      if (assignedToId !== undefined && assignedToId !== null) {
+        const targetUser = await User.findById(assignedToId);
+        if (!targetUser || targetUser.role !== 'helpdesk' || !targetUser.is_active) {
+          return res.status(400).json({
+            success: false,
+            message: 'The specified user is not a helpdesk member',
+            error: { code: 'INVALID_HELPDESK_USER' }
+          });
+        }
+      }
+
       const updates = {};
       if (status !== undefined) updates.status = status;
       if (priority !== undefined) updates.priority = priority;
@@ -180,6 +207,7 @@ class TicketController {
           id: updatedTicket.id,
           status: updatedTicket.status,
           priority: updatedTicket.priority,
+          assignedToId: updatedTicket.assigned_to_id,
           updatedAt: updatedTicket.updated_at
         }
       });
@@ -195,18 +223,6 @@ class TicketController {
       const userId = req.user.sub;
       const userRole = req.user.role;
 
-      // Check authorization - only admin or creator can delete
-      if (userRole !== 'admin') {
-        const ticket = await Ticket.findById(ticketId);
-        if (!ticket || ticket.created_by_id !== userId) {
-          return res.status(403).json({
-            success: false,
-            message: 'You do not have permission to delete this ticket',
-            error: { code: 'INSUFFICIENT_PERMISSIONS' }
-          });
-        }
-      }
-
       const ticket = await Ticket.findById(ticketId);
       if (!ticket) {
         return res.status(404).json({
@@ -214,6 +230,16 @@ class TicketController {
           message: 'Ticket not found',
           error: { code: 'TICKET_NOT_FOUND' }
         });
+      }
+
+      if (userRole !== 'admin') {
+        if (userRole !== 'user' || ticket.created_by_id !== userId) {
+          return res.status(403).json({
+            success: false,
+            message: 'You do not have permission to delete this ticket',
+            error: { code: 'INSUFFICIENT_PERMISSIONS' }
+          });
+        }
       }
 
       await Ticket.delete(ticketId);

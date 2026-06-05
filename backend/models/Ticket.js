@@ -108,23 +108,21 @@ class Ticket {
 
       if (error) throw error;
 
-      console.log(data)
-
       return {
         tickets: data.map(ticket => ({
-          "id": ticket.id,
-          "title": ticket.title,
-          "description": ticket.description,
-          "category": ticket.category,
-          "priority": ticket.priority,
-          "status": ticket.status,
-          "createdById": ticket.created_by.id,
-          "createdByName": ticket.created_by.name,
-          "assignedToId": ticket.assigned_to_id,
-          "assignedToName": ticket.assigned_to?.name,
-          "createdAt": ticket.created_at,
-          "updatedAt": ticket.updated_at,
-          "commentCount": ticket.comment_count
+          id: ticket.id,
+          title: ticket.title,
+          description: ticket.description,
+          category: ticket.category,
+          priority: ticket.priority,
+          status: ticket.status,
+          createdById: ticket.created_by.id,
+          createdByName: ticket.created_by.name,
+          assignedToId: ticket.assigned_to_id,
+          assignedToName: ticket.assigned_to?.name ?? null,
+          createdAt: ticket.created_at,
+          updatedAt: ticket.updated_at,
+          commentCount: ticket.comment_count
         })),
         pagination: {
           page,

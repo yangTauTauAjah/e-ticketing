@@ -137,6 +137,23 @@ class User {
   static async verifyPassword(plainPassword, hashedPassword) {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
+
+  static async findAllByRole(role) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, email, username')
+        .eq('role', role)
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = User;

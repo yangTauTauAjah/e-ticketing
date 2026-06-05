@@ -102,6 +102,25 @@ class UserController {
       next(error);
     }
   }
+
+  static async listHelpdesks(req, res, next) {
+    try {
+      const helpdesks = await User.findAllByRole('helpdesk');
+
+      res.status(200).json({
+        success: true,
+        data: helpdesks.map(u => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          username: u.username
+        }))
+      });
+    } catch (error) {
+      logger.error('List helpdesks error', error.message);
+      next(error);
+    }
+  }
 }
 
 module.exports = UserController;
