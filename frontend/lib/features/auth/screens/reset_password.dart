@@ -47,7 +47,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       key: const ValueKey('form'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("ACCOUNT RECOVERY", 
+        const Text("Account Recovery", 
           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)),
         const Text("Reset Password", 
           style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), letterSpacing: -1)),

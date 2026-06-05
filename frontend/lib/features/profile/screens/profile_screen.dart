@@ -43,7 +43,7 @@ class ProfileScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: const Color(0xFF0F172A), 
-                        borderRadius: BorderRadius.circular(32),
+                        borderRadius: BorderRadius.circular(45),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.15),
@@ -53,21 +53,21 @@ class ProfileScreen extends ConsumerWidget {
                         ],
                       ),
                       child: CircleAvatar(
-                        radius: 40, 
+                        radius: 65, 
                         backgroundColor: Colors.blue, 
                         child: Text(
                           authState?.userName?.substring(0, 1).toUpperCase() ?? 'U', 
-                          style: const TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold)
+                          style: const TextStyle(fontSize: 48, color: Colors.white, fontWeight: FontWeight.bold)
                         )
                       ),
                     ),
                     Container(
-                      height: 24, 
-                      width: 24, 
+                      height: 32, 
+                      width: 32, 
                       decoration: BoxDecoration(
                         color: Colors.green, 
                         shape: BoxShape.circle, 
-                        border: Border.all(color: Colors.white, width: 3),
+                        border: Border.all(color: Colors.white, width: 4),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.green.withValues(alpha: 0.3),
@@ -79,14 +79,14 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 Text(
                   authState?.userName ?? "User", 
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))
+                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))
                 ),
                 Text(
                   "${authState?.role?.toUpperCase() ?? 'USER'} REGISTRY ACCESS", 
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)
                 ),
               ],
             ),
@@ -142,10 +142,10 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildSmallStatCard(String label, String value, {Color? textColor}) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white, 
-          borderRadius: BorderRadius.circular(20), 
+          borderRadius: BorderRadius.circular(24), 
           border: Border.all(color: const Color(0xFFF1F5F9)),
           boxShadow: [
             BoxShadow(
@@ -158,8 +158,8 @@ class ProfileScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8))),
-            Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textColor ?? const Color(0xFF0F172A))),
+            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8))),
+            Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor ?? const Color(0xFF0F172A))),
           ],
         ),
       ),
@@ -179,12 +179,12 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: ListTile(
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         leading: Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.05), 
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
                 color: color.withValues(alpha: 0.1),
@@ -193,11 +193,11 @@ class ProfileScreen extends ConsumerWidget {
               )
             ],
           ),
-          child: Icon(icon, color: color, size: 20),
+          child: Icon(icon, color: color, size: 26),
         ),
-        title: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
-        subtitle: Text(sub.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: color.withValues(alpha: 0.4))),
-        trailing: const Icon(LucideIcons.chevronRight, size: 18, color: Color(0xFFE2E8F0)),
+        title: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+        subtitle: Text(sub.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color.withValues(alpha: 0.4))),
+        trailing: const Icon(LucideIcons.chevronRight, size: 22, color: Color(0xFFE2E8F0)),
       ),
     );
   }

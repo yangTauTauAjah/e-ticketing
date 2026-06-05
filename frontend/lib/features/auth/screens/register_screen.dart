@@ -71,7 +71,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "NEW ACCOUNT",
+              "New Account",
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,

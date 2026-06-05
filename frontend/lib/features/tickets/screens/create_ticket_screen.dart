@@ -161,28 +161,28 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("LODGE INCIDENT", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-            const Text("OFFICIAL SUPPORT REGISTRY ENTRY", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)),
+            const Text("Lodge Incident", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            const Text("Official Support Registry Entry", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)),
             const SizedBox(height: 32),
             
-            _buildLabel("INCIDENT HEADER"),
+            _buildLabel("Incident Header"),
             _buildInputField(_titleController, "e.g., Access credentials expired", error: _titleError),
             const SizedBox(height: 24),
 
             Row(
               children: [
-                Expanded(child: _buildDropdown("REGISTRY CATEGORY", ['technical', 'billing', 'account', 'general', 'feature_request'], selectedCategory, (val) => setState(() => selectedCategory = val!))),
+                Expanded(child: _buildDropdown("Registry Category", ['technical', 'billing', 'account', 'general', 'feature_request'], selectedCategory, (val) => setState(() => selectedCategory = val!))),
                 const SizedBox(width: 16),
-                Expanded(child: _buildDropdown("RISK ASSESSMENT", ['low', 'medium', 'high', 'critical'], selectedPriority, (val) => setState(() => selectedPriority = val!))),
+                Expanded(child: _buildDropdown("Risk Assessment", ['low', 'medium', 'high', 'critical'], selectedPriority, (val) => setState(() => selectedPriority = val!))),
               ],
             ),
             const SizedBox(height: 24),
 
-            _buildLabel("DETAILED NARRATIVE"),
+            _buildLabel("Detailed Narrative"),
             _buildInputField(_descController, "Provide a comprehensive breakdown...", maxLines: 5, error: _descError),
             const SizedBox(height: 24),
 
-            _buildLabel("EVIDENCE LOG"),
+            _buildLabel("Evidence Log"),
             if (_selectedImage != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -198,9 +198,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
               ),
             Row(
               children: [
-                Expanded(child: _buildEvidenceButton(LucideIcons.camera, "CAPTURE", () => _pickImage(ImageSource.camera))),
+                Expanded(child: _buildEvidenceButton(LucideIcons.camera, "Capture", () => _pickImage(ImageSource.camera))),
                 const SizedBox(width: 16),
-                Expanded(child: _buildEvidenceButton(LucideIcons.image, "FILES", () => _pickImage(ImageSource.gallery))),
+                Expanded(child: _buildEvidenceButton(LucideIcons.image, "Files", () => _pickImage(ImageSource.gallery))),
               ],
             ),
             const SizedBox(height: 40),
