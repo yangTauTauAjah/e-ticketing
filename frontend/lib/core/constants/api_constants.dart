@@ -4,4 +4,5 @@ class ApiConstants {
   static const String register = "$baseUrl/auth/register";
   static const String tickets = "$baseUrl/tickets";
   static const String comments = "$baseUrl/comments";
+  static const String helpdesks = "$baseUrl/users/helpdesks";
 }

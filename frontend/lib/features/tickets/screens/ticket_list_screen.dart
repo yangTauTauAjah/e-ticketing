@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:e_ticketing/features/tickets/models/ticket_model.dart';
 import 'package:e_ticketing/features/tickets/providers/ticket_provider.dart';
+import 'package:e_ticketing/features/auth/providers/auth_provider.dart';
+import 'package:e_ticketing/features/tickets/providers/helpdesk_provider.dart';
+import 'package:e_ticketing/core/network/dio_client.dart';
+import 'package:e_ticketing/core/constants/api_constants.dart';
 
 class TicketListScreen extends ConsumerStatefulWidget {
   const TicketListScreen({super.key});
@@ -29,9 +33,111 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
         return const Color(0xFF7C3AED); // Purple
     }
   }
+  Future<void> _patchAssign(String ticketId, String? helpdeskId) async {
+    try {
+      final dio = ref.read(dioProvider).instance;
+      await dio.patch('${ApiConstants.tickets}/$ticketId',
+          data: {'assignedToId': helpdeskId});
+      ref.invalidate(ticketsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Assignment updated')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update assignment')),
+        );
+      }
+    }
+  }
+
+  void _showAssignSheet(Ticket ticket) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Consumer(
+        builder: (ctx, sheetRef, _) {
+          final helpdesksAsync = sheetRef.watch(helpdesksProvider);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'Assign Helpdesk — ${ticket.title}',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Divider(height: 1),
+              helpdesksAsync.when(
+                data: (helpdesks) => Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      ListTile(
+                        title: const Text('Unassigned',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        trailing: ticket.assignedToId == null
+                          ? const Icon(LucideIcons.check, size: 16, color: Color(0xFF0F172A))
+                          : null,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _patchAssign(ticket.id, null);
+                        },
+                      ),
+                      ...helpdesks.map((h) => ListTile(
+                        title: Text(h.name,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        subtitle: Text(h.email,
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                        trailing: ticket.assignedToId == h.id
+                          ? const Icon(LucideIcons.check, size: 16, color: Color(0xFF0F172A))
+                          : null,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _patchAssign(ticket.id, h.id);
+                        },
+                      )),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Text('Error loading helpdesk users: $e',
+                    style: const TextStyle(color: Colors.red)),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ticketsAsync = ref.watch(ticketsProvider);
+    final authState = ref.watch(authProvider).value;
+    final isAdmin = authState?.role == 'admin';
 
     return Scaffold(
       body: Column(
@@ -131,7 +237,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                 return ListView.builder(
                   padding: const EdgeInsets.all(24),
                   itemCount: filteredTickets.length,
-                  itemBuilder: (context, index) => _buildTicketCard(filteredTickets[index]),
+                  itemBuilder: (context, index) => _buildTicketCard(filteredTickets[index], isAdmin),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -150,7 +256,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   }
 
   // Helper Widget updated to use Ticket Model
-  Widget _buildTicketCard(Ticket ticket) {
+  Widget _buildTicketCard(Ticket ticket, bool isAdmin) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -172,17 +278,23 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    _buildBadge(ticket.status.name.toUpperCase(), ticket.statusColor),
-                    const SizedBox(width: 8),
-                    _buildBadge(ticket.priority.name.toUpperCase(), _getPriorityColor(ticket.priority)),
-                  ],
-                ),
-                Text(ticket.createdAt.toString().split(' ')[0], 
-                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8))),
+                _buildBadge(ticket.status.name.toUpperCase(), ticket.statusColor),
+                const SizedBox(width: 8),
+                _buildBadge(ticket.priority.name.toUpperCase(), _getPriorityColor(ticket.priority)),
+                const Spacer(),
+                if (isAdmin)
+                  IconButton(
+                    onPressed: () => _showAssignSheet(ticket),
+                    icon: const Icon(LucideIcons.userPlus, size: 16, color: Color(0xFF64748B)),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: 'Assign helpdesk',
+                  ),
+                if (isAdmin) const SizedBox(width: 8),
+                Flexible(child: Text(ticket.createdAt.toString().split(' ')[0],
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8)))),
               ],
             ),
             const SizedBox(height: 16),

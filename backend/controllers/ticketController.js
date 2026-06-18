@@ -143,7 +143,7 @@ class TicketController {
   static async update(req, res, next) {
     try {
       const { ticketId } = req.params;
-      const { status, priority, assignedToId } = req.validatedBody;
+      const { status, priority, category, assignedToId } = req.validatedBody;
       const userId = req.user.sub;
       const userRole = req.user.role;
 
@@ -156,15 +156,12 @@ class TicketController {
         });
       }
 
-      // Helpdesk may only update status
+      // Helpdesk may update status, priority, and category; assignedToId is admin-only
       if (userRole === 'helpdesk') {
-        const attemptedAdminFields = [priority, assignedToId].some(
-          (v) => v !== undefined
-        );
-        if (attemptedAdminFields) {
+        if (assignedToId !== undefined) {
           return res.status(403).json({
             success: false,
-            message: 'Helpdesk users may only update ticket status',
+            message: 'Helpdesk users may not assign tickets',
             error: { code: 'INSUFFICIENT_PERMISSIONS' }
           });
         }
@@ -194,6 +191,7 @@ class TicketController {
       const updates = {};
       if (status !== undefined) updates.status = status;
       if (priority !== undefined) updates.priority = priority;
+      if (category !== undefined) updates.category = category;
       if (assignedToId !== undefined) updates.assigned_to_id = assignedToId;
 
       const updatedTicket = await Ticket.update(ticketId, updates);
@@ -207,6 +205,7 @@ class TicketController {
           id: updatedTicket.id,
           status: updatedTicket.status,
           priority: updatedTicket.priority,
+          category: updatedTicket.category,
           assignedToId: updatedTicket.assigned_to_id,
           updatedAt: updatedTicket.updated_at
         }

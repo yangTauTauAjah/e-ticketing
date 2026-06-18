@@ -67,6 +67,9 @@ const schemas = {
     priority: Joi.string()
       .valid('low', 'medium', 'high', 'critical')
       .optional(),
+    category: Joi.string()
+      .valid('billing', 'technical', 'account', 'general', 'feature_request')
+      .optional(),
     assignedToId: Joi.string().uuid().allow(null).optional()
   }).min(1),
 
