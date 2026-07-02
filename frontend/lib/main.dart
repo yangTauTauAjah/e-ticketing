@@ -7,6 +7,7 @@ import 'package:e_ticketing/features/profile/screens/profile_screen.dart';
 import 'package:e_ticketing/features/auth/screens/login_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/create_ticket_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_detail_screen.dart';
+import 'package:e_ticketing/features/tickets/screens/ticket_history_screen.dart';
 
 void main() {
   runApp(
@@ -38,6 +39,12 @@ class MyApp extends StatelessWidget {
           final ticketId = settings.arguments as String;
           return MaterialPageRoute(
             builder: (context) => TicketDetailScreen(ticketId: ticketId),
+          );
+        }
+        if (settings.name == '/ticket-history') {
+          final ticketId = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => TicketHistoryScreen(ticketId: ticketId),
           );
         }
         return null;

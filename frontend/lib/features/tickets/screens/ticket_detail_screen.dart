@@ -7,6 +7,7 @@ import 'package:e_ticketing/features/tickets/providers/helpdesk_provider.dart';
 import 'package:e_ticketing/core/network/dio_client.dart';
 import 'package:e_ticketing/core/constants/api_constants.dart';
 import 'package:e_ticketing/features/tickets/providers/ticket_provider.dart';
+import 'package:e_ticketing/features/tickets/providers/ticket_history_provider.dart';
 
 final ticketDetailProvider = FutureProvider.family<Ticket, String>((ref, id) async {
   final dio = ref.read(dioProvider).instance;
@@ -45,6 +46,7 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
       await dio.patch('${ApiConstants.tickets}/${widget.ticketId}', data: data);
       ref.invalidate(ticketDetailProvider(widget.ticketId));
       ref.invalidate(ticketsProvider);
+      ref.invalidate(ticketHistoryProvider(widget.ticketId));
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -65,7 +67,20 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(leading: const BackButton()),
+      appBar: AppBar(
+        leading: const BackButton(),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.history),
+            tooltip: 'View history',
+            onPressed: () => Navigator.pushNamed(
+              context,
+              '/ticket-history',
+              arguments: widget.ticketId,
+            ),
+          ),
+        ],
+      ),
       body: ticketAsync.when(
         data: (ticket) => SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -132,8 +147,7 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
               ),
               const SizedBox(height: 24),
-              ...ticket.comments.map((c) =>
-                _buildCommentBubble(c.authorName, c.content, isMe: c.authorId == authState?.id)),
+              ..._buildTimeline(ticket, authState?.id).map((item) => item.widget),
               const SizedBox(height: 70),
             ],
           ),
@@ -348,6 +362,34 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
     );
   }
 
+  Widget _buildHistoryMessage(String message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Center(
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic),
+        ),
+      ),
+    );
+  }
+
+  List<_TimelineItem> _buildTimeline(Ticket ticket, String? currentUserId) {
+    final items = <_TimelineItem>[];
+    for (final c in ticket.comments) {
+      items.add(_TimelineItem(
+        c.createdAt,
+        _buildCommentBubble(c.authorName, c.content, isMe: c.authorId == currentUserId),
+      ));
+    }
+    for (final h in ticket.history) {
+      items.add(_TimelineItem(h.changedAt, _buildHistoryMessage(h.message)));
+    }
+    items.sort((a, b) => a.time.compareTo(b.time));
+    return items;
+  }
+
   Widget _buildInfoTile(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,4 +402,10 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
       ],
     );
   }
+}
+
+class _TimelineItem {
+  final DateTime time;
+  final Widget widget;
+  _TimelineItem(this.time, this.widget);
 }

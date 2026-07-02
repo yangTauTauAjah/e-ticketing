@@ -10,24 +10,34 @@
 
 ## Table of Contents
 
-1. [Getting Started](#getting-started)
-2. [Authentication](#authentication)
-   - [Register](#1-register)
-   - [Login](#2-login)
-   - [Logout](#3-logout-client-side)
-3. [Tickets](#tickets)
-   - [List Tickets](#4-list-tickets)
-   - [Get Ticket Detail](#5-get-ticket-detail)
-   - [Create Ticket](#6-create-ticket)
-   - [Update Ticket Status](#7-update-ticket-status)
-4. [Comments](#comments)
-   - [Add Comment](#8-add-comment)
-5. [File Upload](#file-upload)
-   - [Upload File](#9-upload-file)
-6. [Error Handling](#error-handling)
-7. [Authorization Rules](#authorization-rules)
-8. [Rate Limits](#rate-limits)
-9. [Known Issues & Notes](#known-issues--notes)
+- [E-Ticketing Helpdesk — API Documentation](#e-ticketing-helpdesk--api-documentation)
+  - [Table of Contents](#table-of-contents)
+  - [Getting Started](#getting-started)
+    - [Base URL](#base-url)
+    - [Authentication](#authentication)
+    - [Response Envelope](#response-envelope)
+  - [Authentication](#authentication-1)
+    - [1. Register](#1-register)
+    - [2. Login](#2-login)
+    - [3. Logout *(client-side)*](#3-logout-client-side)
+  - [Tickets](#tickets)
+    - [4. List Tickets](#4-list-tickets)
+    - [5. Get Ticket Detail](#5-get-ticket-detail)
+    - [6. Create Ticket](#6-create-ticket)
+    - [7. Update Ticket Status](#7-update-ticket-status)
+  - [Comments](#comments)
+    - [8. Add Comment](#8-add-comment)
+  - [File Upload](#file-upload)
+    - [9. Upload File](#9-upload-file)
+  - [Error Handling](#error-handling)
+    - [HTTP Status Codes](#http-status-codes)
+    - [Error Codes](#error-codes)
+  - [Authorization Rules](#authorization-rules)
+  - [Rate Limits](#rate-limits)
+  - [Known Issues \& Notes](#known-issues--notes)
+    - [Comment endpoint URL](#comment-endpoint-url)
+    - [Reset password screen](#reset-password-screen)
+    - [JWT expiry](#jwt-expiry)
 
 ---
 
@@ -96,7 +106,7 @@ Creates a new user account. Does **not** automatically log the user in — a sep
   "name": "John Doe",
   "username": "johndoe",
   "email": "john@example.com",
-  "password": "SecurePass123!",
+  "password": "123456Aa*",
   "phone": "1234567890"
 }
 ```

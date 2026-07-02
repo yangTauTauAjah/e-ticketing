@@ -3,6 +3,7 @@ const Attachment = require('../models/Attachment');
 const Comment = require('../models/Comment');
 const User = require('../models/User');
 const logger = require('../utils/logger');
+const TicketHistory = require('../models/TicketHistory');
 
 class TicketController {
   static async create(req, res, next) {
@@ -18,6 +19,18 @@ class TicketController {
         priority: priority || 'medium',
         createdById: userId
       });
+
+      try {
+        await TicketHistory.create({
+          ticketId: ticket.id,
+          changedById: userId,
+          fieldName: 'status',
+          oldValue: null,
+          newValue: 'open'
+        });
+      } catch (historyError) {
+        logger.error('Failed to write ticket history', historyError.message);
+      }
 
       logger.info('Ticket created', { ticketId: ticket.id, userId });
 
@@ -96,6 +109,7 @@ class TicketController {
 
       const attachments = await Attachment.findByTicket(ticketId);
       const comments = await Comment.findByTicket(ticketId);
+      const history = await TicketHistory.findByTicket(ticketId);
 
       // Users cannot see internal comments
       const visibleComments = userRole === 'user'
@@ -130,12 +144,48 @@ class TicketController {
             createdAt: ticket.created_at,
             updatedAt: ticket.updated_at,
             attachments,
-            comments: mappedComments
+            comments: mappedComments,
+            history
           }
         }
       });
     } catch (error) {
       logger.error('Ticket detail error', error.message);
+      next(error);
+    }
+  }
+
+  static async getHistory(req, res, next) {
+    try {
+      const { ticketId } = req.params;
+      const userId = req.user.sub;
+      const userRole = req.user.role;
+
+      const ticket = await Ticket.findById(ticketId);
+      if (!ticket) {
+        return res.status(404).json({
+          success: false,
+          message: 'Ticket not found',
+          error: { code: 'TICKET_NOT_FOUND' }
+        });
+      }
+
+      if (userRole === 'user' && ticket.created_by_id !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to view this ticket',
+          error: { code: 'INSUFFICIENT_PERMISSIONS' }
+        });
+      }
+
+      const history = await TicketHistory.findByTicket(ticketId);
+
+      res.status(200).json({
+        success: true,
+        data: history
+      });
+    } catch (error) {
+      logger.error('Ticket history error', error.message);
       next(error);
     }
   }
@@ -177,6 +227,7 @@ class TicketController {
       }
 
       // Validate that assignedToId targets a helpdesk-role user (admin only path)
+      let newAssigneeName = null;
       if (assignedToId !== undefined && assignedToId !== null) {
         const targetUser = await User.findById(assignedToId);
         if (!targetUser || targetUser.role !== 'helpdesk' || !targetUser.is_active) {
@@ -186,6 +237,7 @@ class TicketController {
             error: { code: 'INVALID_HELPDESK_USER' }
           });
         }
+        newAssigneeName = targetUser.name;
       }
 
       const updates = {};
@@ -195,6 +247,38 @@ class TicketController {
       if (assignedToId !== undefined) updates.assigned_to_id = assignedToId;
 
       const updatedTicket = await Ticket.update(ticketId, updates);
+
+      const historyEntries = [];
+      if (status !== undefined && status !== ticket.status) {
+        historyEntries.push({ fieldName: 'status', oldValue: ticket.status, newValue: status });
+      }
+      if (priority !== undefined && priority !== ticket.priority) {
+        historyEntries.push({ fieldName: 'priority', oldValue: ticket.priority, newValue: priority });
+      }
+      if (category !== undefined && category !== ticket.category) {
+        historyEntries.push({ fieldName: 'category', oldValue: ticket.category, newValue: category });
+      }
+      if (assignedToId !== undefined && assignedToId !== ticket.assigned_to_id) {
+        historyEntries.push({
+          fieldName: 'assignedToId',
+          oldValue: ticket.assigned_to?.name ?? null,
+          newValue: assignedToId !== null ? newAssigneeName : null
+        });
+      }
+
+      for (const entry of historyEntries) {
+        try {
+          await TicketHistory.create({
+            ticketId,
+            changedById: userId,
+            fieldName: entry.fieldName,
+            oldValue: entry.oldValue,
+            newValue: entry.newValue
+          });
+        } catch (historyError) {
+          logger.error('Failed to write ticket history', historyError.message);
+        }
+      }
 
       logger.info('Ticket updated', { ticketId, userId, updates });
 

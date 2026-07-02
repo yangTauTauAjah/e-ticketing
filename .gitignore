@@ -83,3 +83,7 @@ Thumbs.db
 # Misc
 *.log
 *.pyc
+
+# Claude
+/docs
+/.claude

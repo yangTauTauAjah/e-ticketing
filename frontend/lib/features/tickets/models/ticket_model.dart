@@ -1,4 +1,5 @@
 import 'package:e_ticketing/features/tickets/models/comment_model.dart';
+import 'package:e_ticketing/features/tickets/models/ticket_history_model.dart';
 import 'package:flutter/material.dart';
 
 // Mapping your DB enums to Dart
@@ -22,6 +23,7 @@ class Ticket {
   final DateTime updatedAt;
   final int commentCount;
   final List<Comment> comments;
+  final List<TicketHistoryEvent> history;
 
   Ticket({
     required this.id,
@@ -38,6 +40,7 @@ class Ticket {
     required this.updatedAt,
     this.commentCount = 0,
     this.comments = const [],
+    this.history = const [],
   });
   // Helper to convert snake_case to camelCase enum names
   static String snakeToCamelCase(String input) {
@@ -59,7 +62,14 @@ class Ticket {
             .map((c) => Comment.fromJson(c))
             .toList();
       }
-      
+
+      var historyList = <TicketHistoryEvent>[];
+      if (json['history'] != null) {
+        historyList = (json['history'] as List)
+            .map((h) => TicketHistoryEvent.fromJson(h))
+            .toList();
+      }
+
       // Convert snake_case from backend to camelCase for Dart enums
       String categoryName = Ticket.snakeToCamelCase(json['category'] ?? 'general');
       String priorityName = Ticket.snakeToCamelCase(json['priority'] ?? 'medium');
@@ -89,6 +99,7 @@ class Ticket {
         updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now(),
         commentCount: (json['commentCount'] ?? json['comment_count'] ?? 0) as int,
         comments: commentList,
+        history: historyList,
       );
     } catch (e) {
       print("Error parsing Ticket JSON: $e");
