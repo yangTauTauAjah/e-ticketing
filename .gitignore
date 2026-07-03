@@ -87,3 +87,6 @@ Thumbs.db
 # Claude
 /docs
 /.claude
+/.superpowers
+
+/ignore

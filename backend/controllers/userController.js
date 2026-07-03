@@ -121,6 +121,47 @@ class UserController {
       next(error);
     }
   }
+
+  static async listAll(req, res, next) {
+    try {
+      const { page, limit, search, role } = req.query;
+      const result = await User.findAll({ page, limit, search, role });
+
+      res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      logger.error('List all users error', error.message);
+      next(error);
+    }
+  }
+
+  static async setActive(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const { isActive } = req.body;
+
+      if (typeof isActive !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          message: 'isActive must be a boolean',
+          error: { code: 'INVALID_INPUT' }
+        });
+      }
+
+      const user = await User.setActive(userId, isActive);
+
+      res.status(200).json({
+        success: true,
+        message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+        data: user
+      });
+    } catch (error) {
+      logger.error('Set user active error', error.message);
+      next(error);
+    }
+  }
 }
 
 module.exports = UserController;

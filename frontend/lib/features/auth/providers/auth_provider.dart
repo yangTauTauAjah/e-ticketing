@@ -15,6 +15,25 @@ class AuthState {
 class AuthNotifier extends AsyncNotifier<AuthState> {
   @override
   Future<AuthState> build() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'jwt_token');
+    if (token == null) return AuthState(isAuthenticated: false);
+
+    try {
+      final dio = ref.read(dioProvider).instance;
+      final response = await dio.get(ApiConstants.profile);
+      if (response.data['success'] == true) {
+        final data = response.data['data'];
+        return AuthState(
+          id: data['id'],
+          role: data['role'],
+          userName: data['name'],
+          isAuthenticated: true,
+        );
+      }
+    } catch (_) {
+      await storage.delete(key: 'jwt_token');
+    }
     return AuthState(isAuthenticated: false);
   }
 

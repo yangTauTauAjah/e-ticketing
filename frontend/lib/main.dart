@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:e_ticketing/core/theme/theme_provider.dart';
 import 'package:e_ticketing/features/tickets/screens/dashboard_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_list_screen.dart';
 import 'package:e_ticketing/features/profile/screens/profile_screen.dart';
 import 'package:e_ticketing/features/auth/screens/login_screen.dart';
+import 'package:e_ticketing/features/auth/screens/splash_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/create_ticket_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_detail_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_history_screen.dart';
+import 'package:e_ticketing/features/tickets/screens/ticket_tracking_screen.dart';
+import 'package:e_ticketing/features/settings/screens/settings_screen.dart';
+import 'package:e_ticketing/features/admin/screens/user_management_screen.dart';
 
 void main() {
   runApp(
@@ -17,18 +22,31 @@ void main() {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'E-Ticket',      theme: ThemeData(
+      title: 'E-Ticket',
+      themeMode: themeMode,
+      theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0F172A)),
       ),
-      home: const LoginScreen(),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.dark,
+        ),
+      ),
+      home: const SplashScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/dashboard': (context) => const MainLayout(),
@@ -46,6 +64,18 @@ class MyApp extends StatelessWidget {
           return MaterialPageRoute(
             builder: (context) => TicketHistoryScreen(ticketId: ticketId),
           );
+        }
+        if (settings.name == '/ticket-tracking') {
+          final ticketId = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => TicketTrackingScreen(ticketId: ticketId),
+          );
+        }
+        if (settings.name == '/settings') {
+          return MaterialPageRoute(builder: (context) => const SettingsScreen());
+        }
+        if (settings.name == '/admin/users') {
+          return MaterialPageRoute(builder: (context) => const UserManagementScreen());
         }
         return null;
       },

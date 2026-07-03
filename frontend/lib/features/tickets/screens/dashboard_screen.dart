@@ -84,57 +84,58 @@ class DashboardScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           
           // 2. Data-driven Stats Card
-          ticketsAsync.when(
-            data: (tickets) {
-              final total = tickets.length;
-              final resolved = tickets.where((t) => t.status == TicketStatus.closed).length;
-
-              return Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
+          ref.watch(ticketStatsProvider).when(
+            data: (stats) => Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("TOTAL SUPPORT TICKETS",
+                        style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      const SizedBox(height: 8),
+                      Text("${stats.total}",
+                        style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          _buildStatBadge("OPEN", stats.open, Colors.blue),
+                          const SizedBox(width: 8),
+                          _buildStatBadge("IN PROGRESS", stats.inProgress, Colors.orange),
+                          const SizedBox(width: 8),
+                          _buildStatBadge("ON HOLD", stats.onHold, Colors.amber),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _buildStatBadge("CLOSED", stats.closed, Colors.green),
+                          const SizedBox(width: 8),
+                          _buildStatBadge("REOPENED", stats.reopened, Colors.red),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("TOTAL SUPPORT TICKETS", style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                    const SizedBox(height: 8),
-                    Text("$total", style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-                          child: Row(
-                            children: [
-                              const Icon(LucideIcons.checkCircle2, color: Colors.blue, size: 12),
-                              const SizedBox(width: 4),
-                              Text("$resolved Resolved", style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text("OVERALL SUCCESS STATE", style: TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
-                      ],
-                    )
-                  ],
-                ),
-              );
-            },
+              ],
+            ),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, _) => Text("Error loading stats: $err"),
           ),
-          
+
           const SizedBox(height: 32),
 
           // Quick Actions Grid (Static for now, matches UI reqs)
@@ -196,7 +197,26 @@ class DashboardScreen extends ConsumerWidget {
       ],
     );
   }
-  
+
+  // Helper Widget for Stat Badges
+  Widget _buildStatBadge(String label, int count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text("$count", style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
   // Helper to get priority color
   Color _getPriorityColor(TicketPriority priority) {
     switch (priority) {

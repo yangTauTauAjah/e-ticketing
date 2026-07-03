@@ -121,9 +121,17 @@ class ProfileScreen extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                _buildProfileAction(LucideIcons.settings, "System Configuration", "Adjust registry preferences"),
+                _buildProfileAction(
+                  LucideIcons.settings, "System Configuration", "Adjust registry preferences",
+                  onTap: () => Navigator.pushNamed(context, '/settings'),
+                ),
                 _buildProfileAction(LucideIcons.shield, "Security & Privacy", "Biometric & Session keys"),
                 _buildProfileAction(LucideIcons.bell, "Notification Stream", "Push and email routing"),
+                if (authState?.role == 'admin')
+                  _buildProfileAction(
+                    LucideIcons.users, "User Management", "Manage accounts & roles",
+                    onTap: () => Navigator.pushNamed(context, '/admin/users'),
+                  ),
                 // Logout Action
                 _buildProfileAction(
                   LucideIcons.logOut, 

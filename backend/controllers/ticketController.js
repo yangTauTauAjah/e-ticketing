@@ -71,6 +71,10 @@ class TicketController {
         filters.createdById = userId;
       }
 
+      if (userRole === 'helpdesk') {
+        filters.assignedToId = userId;
+      }
+
       const result = await Ticket.list(filters);
 
       res.status(200).json({
@@ -79,6 +83,27 @@ class TicketController {
       });
     } catch (error) {
       logger.error('Ticket list error', error.message);
+      next(error);
+    }
+  }
+
+  static async getStats(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const userRole = req.user.role;
+
+      const filters = {};
+      if (userRole === 'user') filters.createdById = userId;
+      if (userRole === 'helpdesk') filters.assignedToId = userId;
+
+      const stats = await Ticket.stats(filters);
+
+      res.status(200).json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      logger.error('Ticket stats error', error.message);
       next(error);
     }
   }

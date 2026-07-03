@@ -154,6 +154,56 @@ class User {
       throw error;
     }
   }
+
+  static async findAll(filters = {}) {
+    try {
+      let query = supabase
+        .from('users')
+        .select('id, name, email, username, role, is_active, created_at, last_login', { count: 'exact' });
+
+      if (filters.search) {
+        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,username.ilike.%${filters.search}%`);
+      }
+
+      if (filters.role) {
+        query = query.eq('role', filters.role);
+      }
+
+      query = query.order('created_at', { ascending: false });
+
+      const page = parseInt(filters.page) || 1;
+      const limit = parseInt(filters.limit) || 20;
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
+      if (error) throw error;
+
+      return {
+        users: data,
+        pagination: { page, limit, total: count, pages: Math.ceil(count / limit) }
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async setActive(userId, isActive) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .update({ is_active: isActive, updated_at: new Date().toISOString() })
+        .eq('id', userId)
+        .select('id, name, email, role, is_active')
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = User;

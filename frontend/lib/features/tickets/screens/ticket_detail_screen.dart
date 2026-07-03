@@ -46,6 +46,8 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
       await dio.patch('${ApiConstants.tickets}/${widget.ticketId}', data: data);
       ref.invalidate(ticketDetailProvider(widget.ticketId));
       ref.invalidate(ticketsProvider);
+      ref.invalidate(filteredTicketsProvider);
+      ref.invalidate(ticketStatsProvider);
       ref.invalidate(ticketHistoryProvider(widget.ticketId));
     } catch (_) {
       if (mounted) {
@@ -70,6 +72,15 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
       appBar: AppBar(
         leading: const BackButton(),
         actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.gitBranch),
+            tooltip: 'View tracking',
+            onPressed: () => Navigator.pushNamed(
+              context,
+              '/ticket-tracking',
+              arguments: widget.ticketId,
+            ),
+          ),
           IconButton(
             icon: const Icon(LucideIcons.history),
             tooltip: 'View history',

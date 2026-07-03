@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const { generateToken } = require('../config/jwt');
 const logger = require('../utils/logger');
+const { sendPasswordResetEmail } = require('../utils/email');
 
 class AuthController {
   static async register(req, res, next) {
@@ -141,8 +142,12 @@ class AuthController {
         });
       }
 
-      // TODO: Send password reset email
-      // This would integrate with email service
+      const resetLink = `${process.env.FRONTEND_URL}/reset-password?email=${encodeURIComponent(email)}`;
+      try {
+        await sendPasswordResetEmail(email, resetLink);
+      } catch (emailError) {
+        logger.error('Failed to send password reset email', emailError.message);
+      }
 
       logger.info('Password reset requested', { email });
 

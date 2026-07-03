@@ -5,4 +5,7 @@ class ApiConstants {
   static const String tickets = "$baseUrl/tickets";
   static const String comments = "$baseUrl/comments";
   static const String helpdesks = "$baseUrl/users/helpdesks";
+  static const String profile = "$baseUrl/users/profile";
+  static const String ticketStats = "$baseUrl/tickets/stats";
+  static const String usersAdmin = "$baseUrl/users";
 }

@@ -136,6 +136,34 @@ class Ticket {
     }
   }
 
+  static async stats(filters = {}) {
+    try {
+      const statuses = ['open', 'in_progress', 'on_hold', 'closed', 'reopened'];
+      const counts = {};
+
+      for (const status of statuses) {
+        let query = supabase
+          .from('tickets')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', status);
+
+        if (filters.createdById) query = query.eq('created_by_id', filters.createdById);
+        if (filters.assignedToId) query = query.eq('assigned_to_id', filters.assignedToId);
+
+        const { count, error } = await query;
+        if (error) throw error;
+        counts[status] = count ?? 0;
+      }
+
+      return {
+        total: Object.values(counts).reduce((a, b) => a + b, 0),
+        ...counts
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async update(ticketId, updates) {
     try {
       const { data, error } = await supabase

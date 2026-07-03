@@ -11,5 +11,7 @@ router.get('/profile', UserController.getProfile);
 router.patch('/profile', validate(schemas.updateProfile), UserController.updateProfile);
 router.post('/change-password', validate(schemas.changePassword), UserController.changePassword);
 router.get('/helpdesks', roleMiddleware(['admin']), UserController.listHelpdesks);
+router.get('/', roleMiddleware(['admin']), UserController.listAll);
+router.patch('/:userId/active', roleMiddleware(['admin']), UserController.setActive);
 
 module.exports = router;

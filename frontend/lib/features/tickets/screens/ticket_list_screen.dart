@@ -19,6 +19,8 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   String selectedFilter = 'ALL';
   String searchQuery = '';
   final List<String> filters = ['ALL', 'OPEN', 'IN PROGRESS', 'CLOSED'];
+  String? _selectedHelpdeskId;
+  Map<String, String> _filterParams = const <String, String>{};
 
   // Helper to get priority color
   Color _getPriorityColor(TicketPriority priority) {
@@ -39,6 +41,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
       await dio.patch('${ApiConstants.tickets}/$ticketId',
           data: {'assignedToId': helpdeskId});
       ref.invalidate(ticketsProvider);
+      ref.invalidate(filteredTicketsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Assignment updated')),
@@ -135,7 +138,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ticketsAsync = ref.watch(ticketsProvider);
+    final ticketsAsync = ref.watch(filteredTicketsProvider(_filterParams));
     final authState = ref.watch(authProvider).value;
     final isAdmin = authState?.role == 'admin';
 
@@ -216,6 +219,39 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
               },
             ),
           ),
+
+          // Helpdesk filter — admin only
+          if (isAdmin)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: ref.watch(helpdesksProvider).when(
+                data: (helpdesks) => DropdownButtonFormField<String?>(
+                  value: _selectedHelpdeskId,
+                  decoration: InputDecoration(
+                    labelText: 'Filter by helpdesk',
+                    labelStyle: const TextStyle(fontSize: 12),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFF1F5F9))),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String?>(value: null, child: Text('All helpdesks')),
+                    ...helpdesks.map((h) => DropdownMenuItem<String?>(
+                      value: h.id,
+                      child: Text(h.name, style: const TextStyle(fontSize: 13)),
+                    )),
+                  ],
+                  onChanged: (val) => setState(() {
+                    _selectedHelpdeskId = val;
+                    _filterParams = val != null
+                        ? <String, String>{'assignedToId': val}
+                        : const <String, String>{};
+                  }),
+                ),
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+            ),
 
           // 2. Data-Driven Ticket List
           Expanded(
