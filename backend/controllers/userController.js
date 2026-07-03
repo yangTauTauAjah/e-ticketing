@@ -162,6 +162,39 @@ class UserController {
       next(error);
     }
   }
+
+  static async adminUpdateUser(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const { name, email, role, isActive } = req.validatedBody;
+
+      const updates = {};
+      if (name !== undefined) updates.name = name;
+      if (email !== undefined) updates.email = email;
+      if (role !== undefined) updates.role = role;
+      if (isActive !== undefined) updates.is_active = isActive;
+
+      const user = await User.updateProfile(userId, updates);
+
+      logger.info('User updated by admin', { userId, adminId: req.user.sub });
+
+      res.status(200).json({
+        success: true,
+        message: 'User updated successfully',
+        data: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          isActive: user.is_active,
+          updatedAt: user.updated_at
+        }
+      });
+    } catch (error) {
+      logger.error('Admin update user error', error.message);
+      next(error);
+    }
+  }
 }
 
 module.exports = UserController;

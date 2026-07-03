@@ -100,7 +100,14 @@ const schemas = {
 
   resetPassword: Joi.object({
     email: Joi.string().email().required()
-  })
+  }),
+
+  adminUpdateUser: Joi.object({
+    name: Joi.string().max(255).optional(),
+    email: Joi.string().email().optional(),
+    role: Joi.string().valid('user', 'helpdesk', 'admin').optional(),
+    isActive: Joi.boolean().optional()
+  }).min(1)
 };
 
 const validate = (schema) => {

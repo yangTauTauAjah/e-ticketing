@@ -17,10 +17,16 @@ class TicketListScreen extends ConsumerStatefulWidget {
   ConsumerState<TicketListScreen> createState() => _TicketListScreenState();
 }
 
+String _categoryLabel(TicketCategory category) => category.name
+    .replaceAllMapped(RegExp(r'([A-Z])'), (m) => ' ${m.group(0)}')
+    .toUpperCase();
+
 class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   String selectedFilter = 'ALL';
+  String selectedCategory = 'ALL';
   String searchQuery = '';
   final List<String> filters = ['ALL', 'OPEN', 'IN PROGRESS', 'CLOSED'];
+  final List<String> categories = ['ALL', ...TicketCategory.values.map(_categoryLabel)];
   String? _selectedHelpdeskId;
   Map<String, String> _filterParams = const <String, String>{};
 
@@ -43,6 +49,142 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
         );
       }
     }
+  }
+
+  void _showFilterSheet(bool isAdmin) {
+    final colors = context.colors;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40, height: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceBorder,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text('Filter Tickets',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                  const SizedBox(height: 20),
+                  Text('STATUS',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 1.5)),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: filters.map((filter) {
+                      final isSelected = selectedFilter == filter;
+                      return ChoiceChip(
+                        label: Text(filter, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : colors.textMuted)),
+                        selected: isSelected,
+                        onSelected: (_) {
+                          setSheetState(() {});
+                          setState(() => selectedFilter = filter);
+                        },
+                        selectedColor: colors.accent,
+                        backgroundColor: colors.surface,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: isSelected ? Colors.transparent : colors.surfaceBorder)),
+                        showCheckmark: false,
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('CATEGORY',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 1.5)),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: categories.map((category) {
+                      final isSelected = selectedCategory == category;
+                      return ChoiceChip(
+                        label: Text(category, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : colors.textMuted)),
+                        selected: isSelected,
+                        onSelected: (_) {
+                          setSheetState(() {});
+                          setState(() => selectedCategory = category);
+                        },
+                        selectedColor: colors.accent,
+                        backgroundColor: colors.surface,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: isSelected ? Colors.transparent : colors.surfaceBorder)),
+                        showCheckmark: false,
+                      );
+                    }).toList(),
+                  ),
+                  if (isAdmin) ...[
+                    const SizedBox(height: 24),
+                    Text('HELPDESK',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 1.5)),
+                    const SizedBox(height: 12),
+                    Consumer(
+                      builder: (ctx, sheetRef, _) => sheetRef.watch(helpdesksProvider).when(
+                        data: (helpdesks) => DropdownButtonFormField<String?>(
+                          initialValue: _selectedHelpdeskId,
+                          decoration: InputDecoration(
+                            labelText: 'Filter by helpdesk',
+                            labelStyle: const TextStyle(fontSize: 12),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: colors.surfaceBorder)),
+                          ),
+                          items: [
+                            const DropdownMenuItem<String?>(value: null, child: Text('All helpdesks')),
+                            ...helpdesks.map((h) => DropdownMenuItem<String?>(
+                              value: h.id,
+                              child: Text(h.name, style: const TextStyle(fontSize: 13)),
+                            )),
+                          ],
+                          onChanged: (val) {
+                            setSheetState(() {});
+                            setState(() {
+                              _selectedHelpdeskId = val;
+                              _filterParams = val != null
+                                  ? <String, String>{'assignedToId': val}
+                                  : const <String, String>{};
+                            });
+                          },
+                        ),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, _) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.accent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: const Text('Apply', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _showAssignSheet(Ticket ticket) {
@@ -168,83 +310,41 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colors.accent,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
+                GestureDetector(
+                  onTap: () => _showFilterSheet(isAdmin),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colors.accent,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        )
+                      ],
+                    ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(LucideIcons.slidersHorizontal, color: Colors.white, size: 20),
+                        if (selectedFilter != 'ALL' || selectedCategory != 'ALL' || _selectedHelpdeskId != null)
+                          Positioned(
+                            top: -2,
+                            right: -2,
+                            child: Container(
+                              width: 8, height: 8,
+                              decoration: BoxDecoration(color: colors.warning, shape: BoxShape.circle),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                  child: const Icon(LucideIcons.slidersHorizontal, color: Colors.white, size: 20),
                 )
               ],
             ),
           ),
-
-          // Filter Chips
-          SizedBox(
-            height: 40,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              scrollDirection: Axis.horizontal,
-              itemCount: filters.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final filter = filters[index];
-                final isSelected = selectedFilter == filter;
-                return ChoiceChip(
-                  label: Text(filter, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : colors.textMuted)),
-                  selected: isSelected,
-                  onSelected: (_) => setState(() => selectedFilter = filter),
-                  selectedColor: colors.accent,
-                  backgroundColor: colors.surface,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: isSelected ? Colors.transparent : colors.surfaceBorder)),
-                  showCheckmark: false,
-                  elevation: 2,
-                  shadowColor: Colors.black.withValues(alpha: 0.08),
-                );
-              },
-            ),
-          ),
-
-          // Helpdesk filter — admin only
-          if (isAdmin)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: ref.watch(helpdesksProvider).when(
-                data: (helpdesks) => DropdownButtonFormField<String?>(
-                  value: _selectedHelpdeskId,
-                  decoration: InputDecoration(
-                    labelText: 'Filter by helpdesk',
-                    labelStyle: const TextStyle(fontSize: 12),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.surfaceBorder)),
-                  ),
-                  items: [
-                    const DropdownMenuItem<String?>(value: null, child: Text('All helpdesks')),
-                    ...helpdesks.map((h) => DropdownMenuItem<String?>(
-                      value: h.id,
-                      child: Text(h.name, style: const TextStyle(fontSize: 13)),
-                    )),
-                  ],
-                  onChanged: (val) => setState(() {
-                    _selectedHelpdeskId = val;
-                    _filterParams = val != null
-                        ? <String, String>{'assignedToId': val}
-                        : const <String, String>{};
-                  }),
-                ),
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
-            ),
 
           // 2. Data-Driven Ticket List
           Expanded(
@@ -254,9 +354,11 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                 final filteredTickets = tickets.where((ticket) {
                   final matchesFilter = selectedFilter == 'ALL' ||
                       ticket.status.name.toUpperCase().replaceAll('_', ' ') == selectedFilter;
+                  final matchesCategory = selectedCategory == 'ALL' ||
+                      _categoryLabel(ticket.category) == selectedCategory;
                   final matchesSearch = ticket.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
                       ticket.id.toLowerCase().contains(searchQuery.toLowerCase());
-                  return matchesFilter && matchesSearch;
+                  return matchesFilter && matchesCategory && matchesSearch;
                 }).toList();
 
                 if (filteredTickets.isEmpty) {

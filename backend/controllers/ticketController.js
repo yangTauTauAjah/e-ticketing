@@ -4,6 +4,7 @@ const Comment = require('../models/Comment');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 const TicketHistory = require('../models/TicketHistory');
+const Notification = require('../models/Notification');
 
 class TicketController {
   static async create(req, res, next) {
@@ -303,6 +304,42 @@ class TicketController {
         } catch (historyError) {
           logger.error('Failed to write ticket history', historyError.message);
         }
+      }
+
+      // Notify affected users, excluding whoever made the change
+      try {
+        const notifications = [];
+
+        if (assignedToId !== undefined && assignedToId !== ticket.assigned_to_id && assignedToId !== null && assignedToId !== userId) {
+          notifications.push({
+            userId: assignedToId,
+            ticketId,
+            type: 'ticket_assigned',
+            title: 'Ticket assigned to you',
+            message: `"${ticket.title}" has been assigned to you.`
+          });
+        }
+
+        if (status !== undefined && status !== ticket.status) {
+          const recipients = new Set([ticket.created_by_id, updatedTicket.assigned_to_id]);
+          recipients.delete(userId);
+          recipients.delete(null);
+          recipients.delete(undefined);
+
+          for (const recipientId of recipients) {
+            notifications.push({
+              userId: recipientId,
+              ticketId,
+              type: 'status_changed',
+              title: 'Ticket status updated',
+              message: `"${ticket.title}" status changed to ${status.replace('_', ' ')}.`
+            });
+          }
+        }
+
+        await Notification.createMany(notifications);
+      } catch (notifyError) {
+        logger.error('Failed to create ticket notifications', notifyError.message);
       }
 
       logger.info('Ticket updated', { ticketId, userId, updates });

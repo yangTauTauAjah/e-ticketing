@@ -7,8 +7,8 @@ import 'package:e_ticketing/features/tickets/providers/helpdesk_provider.dart';
 import 'package:e_ticketing/core/network/dio_client.dart';
 import 'package:e_ticketing/core/constants/api_constants.dart';
 import 'package:e_ticketing/features/tickets/providers/ticket_provider.dart';
-import 'package:e_ticketing/features/tickets/providers/ticket_history_provider.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
+import 'package:e_ticketing/core/theme/status_colors.dart';
 
 final ticketDetailProvider = FutureProvider.family<Ticket, String>((ref, id) async {
   final dio = ref.read(dioProvider).instance;
@@ -49,7 +49,6 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
       ref.invalidate(ticketsProvider);
       ref.invalidate(filteredTicketsProvider);
       ref.invalidate(ticketStatsProvider);
-      ref.invalidate(ticketHistoryProvider(widget.ticketId));
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -76,19 +75,10 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.gitBranch),
-            tooltip: 'View tracking',
+            tooltip: 'View activity',
             onPressed: () => Navigator.pushNamed(
               context,
               '/ticket-tracking',
-              arguments: widget.ticketId,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(LucideIcons.history),
-            tooltip: 'View history',
-            onPressed: () => Navigator.pushNamed(
-              context,
-              '/ticket-history',
               arguments: widget.ticketId,
             ),
           ),
@@ -132,7 +122,8 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
                       children: [
                         _buildInfoTile('REPORTER', ticket.createdByName),
                         _buildInfoTile('ASSIGNED TO', ticket.assignedToName ?? 'Unassigned'),
-                        _buildInfoTile('STATUS', ticket.status.name.toUpperCase().replaceAll('_', ' ')),
+                        _buildInfoTile('STATUS', ticket.status.name.toUpperCase().replaceAll('_', ' '),
+                          dotColor: StatusColors.forStatus(ticket.status)),
                         _buildInfoTile('CREATED AT', ticket.createdAt.toString().split(' ')[0]),
                       ],
                     ),
@@ -422,15 +413,29 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
     return items;
   }
 
-  Widget _buildInfoTile(String label, String value) {
+  Widget _buildInfoTile(String label, String value, {Color? dotColor}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
           style: const TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(value,
-          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+        Row(
+          children: [
+            if (dotColor != null) ...[
+              Container(
+                width: 8, height: 8,
+                decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Flexible(
+              child: Text(value,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ],
     );
   }

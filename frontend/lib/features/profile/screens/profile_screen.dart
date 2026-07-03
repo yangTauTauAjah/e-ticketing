@@ -130,7 +130,11 @@ class ProfileScreen extends ConsumerWidget {
                   onTap: () => Navigator.pushNamed(context, '/settings'),
                 ),
                 _buildProfileAction(context, LucideIcons.shield, "Security & Privacy", "Biometric & Session keys"),
-                _buildProfileAction(context, LucideIcons.bell, "Notification Stream", "Push and email routing"),
+                _buildProfileAction(
+                  context,
+                  LucideIcons.bell, "Notification Stream", "Push and email routing",
+                  onTap: () => Navigator.pushNamed(context, '/notifications'),
+                ),
                 if (authState?.role == 'admin')
                   _buildProfileAction(
                     context,

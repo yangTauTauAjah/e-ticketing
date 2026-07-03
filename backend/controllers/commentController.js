@@ -1,5 +1,6 @@
 const Comment = require('../models/Comment');
 const Ticket = require('../models/Ticket');
+const Notification = require('../models/Notification');
 const logger = require('../utils/logger');
 
 class CommentController {
@@ -48,6 +49,27 @@ class CommentController {
 
       // Increment comment count
       await Ticket.incrementCommentCount(ticketId);
+
+      if (!isInternal) {
+        try {
+          const recipients = new Set([ticket.created_by_id, ticket.assigned_to_id]);
+          recipients.delete(userId);
+          recipients.delete(null);
+          recipients.delete(undefined);
+
+          const notifications = [...recipients].map(recipientId => ({
+            userId: recipientId,
+            ticketId,
+            type: 'new_comment',
+            title: 'New comment',
+            message: `New comment on "${ticket.title}".`
+          }));
+
+          await Notification.createMany(notifications);
+        } catch (notifyError) {
+          logger.error('Failed to create comment notifications', notifyError.message);
+        }
+      }
 
       logger.info('Comment created', { commentId: comment.id, ticketId, userId });
 

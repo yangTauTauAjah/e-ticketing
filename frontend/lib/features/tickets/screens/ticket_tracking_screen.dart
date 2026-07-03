@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:e_ticketing/features/tickets/models/ticket_history_model.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_detail_screen.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
 import 'package:e_ticketing/core/theme/status_colors.dart';
@@ -9,15 +10,28 @@ class TicketTrackingScreen extends ConsumerWidget {
   final String ticketId;
   const TicketTrackingScreen({super.key, required this.ticketId});
 
-  IconData _statusIcon(String? status) {
-    switch (status) {
-      case 'open': return LucideIcons.circleDot;
-      case 'in_progress': return LucideIcons.loader;
-      case 'on_hold': return LucideIcons.pauseCircle;
-      case 'closed': return LucideIcons.checkCircle2;
-      case 'reopened': return LucideIcons.refreshCw;
-      default: return LucideIcons.circle;
+  IconData _iconFor(TicketHistoryEvent event) {
+    if (event.fieldName == 'status') {
+      switch (event.newValue) {
+        case 'open': return LucideIcons.circleDot;
+        case 'in_progress': return LucideIcons.loader;
+        case 'on_hold': return LucideIcons.pauseCircle;
+        case 'closed': return LucideIcons.checkCircle2;
+        case 'reopened': return LucideIcons.refreshCw;
+        default: return LucideIcons.circle;
+      }
     }
+    switch (event.fieldName) {
+      case 'priority': return LucideIcons.flag;
+      case 'category': return LucideIcons.tag;
+      case 'assignedToId': return LucideIcons.userPlus;
+      default: return LucideIcons.fileText;
+    }
+  }
+
+  Color _colorFor(TicketHistoryEvent event, AppColors colors) {
+    if (event.fieldName == 'status') return StatusColors.forStatusName(event.newValue);
+    return colors.accent;
   }
 
   @override
@@ -29,18 +43,16 @@ class TicketTrackingScreen extends ConsumerWidget {
       backgroundColor: colors.background,
       appBar: AppBar(
         leading: const BackButton(),
-        title: Text('Ticket Tracking',
+        title: Text('Ticket Activity',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
       ),
       body: ticketAsync.when(
         data: (ticket) {
-          final statusEvents = ticket.history
-            .where((h) => h.fieldName == 'status')
-            .toList()
+          final events = [...ticket.history]
             ..sort((a, b) => a.changedAt.compareTo(b.changedAt));
 
-          if (statusEvents.isEmpty) {
-            return Center(child: Text('No tracking data yet',
+          if (events.isEmpty) {
+            return Center(child: Text('No activity yet',
               style: TextStyle(color: colors.textMuted, fontSize: 13)));
           }
 
@@ -58,7 +70,7 @@ class TicketTrackingScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('TRACKING', style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                    const Text('ACTIVITY', style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
                     const SizedBox(height: 8),
                     Text(ticket.title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
@@ -70,11 +82,11 @@ class TicketTrackingScreen extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // Timeline stepper
-              ...statusEvents.asMap().entries.map((entry) {
+              ...events.asMap().entries.map((entry) {
                 final index = entry.key;
                 final event = entry.value;
-                final isLast = index == statusEvents.length - 1;
-                final color = StatusColors.forStatusName(event.newValue);
+                final isLast = index == events.length - 1;
+                final color = _colorFor(event, colors);
 
                 return IntrinsicHeight(
                   child: Row(
@@ -93,7 +105,7 @@ class TicketTrackingScreen extends ConsumerWidget {
                                 shape: BoxShape.circle,
                                 border: Border.all(color: color, width: 2),
                               ),
-                              child: Icon(_statusIcon(event.newValue), size: 14, color: color),
+                              child: Icon(_iconFor(event), size: 14, color: color),
                             ),
                             if (!isLast)
                               Expanded(

@@ -10,10 +10,10 @@ import 'package:e_ticketing/features/auth/screens/login_screen.dart';
 import 'package:e_ticketing/features/auth/screens/splash_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/create_ticket_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_detail_screen.dart';
-import 'package:e_ticketing/features/tickets/screens/ticket_history_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_tracking_screen.dart';
 import 'package:e_ticketing/features/settings/screens/settings_screen.dart';
 import 'package:e_ticketing/features/admin/screens/user_management_screen.dart';
+import 'package:e_ticketing/features/notifications/screens/notifications_screen.dart';
 
 void main() {
   runApp(
@@ -67,12 +67,6 @@ class MyApp extends ConsumerWidget {
             builder: (context) => TicketDetailScreen(ticketId: ticketId),
           );
         }
-        if (settings.name == '/ticket-history') {
-          final ticketId = settings.arguments as String;
-          return MaterialPageRoute(
-            builder: (context) => TicketHistoryScreen(ticketId: ticketId),
-          );
-        }
         if (settings.name == '/ticket-tracking') {
           final ticketId = settings.arguments as String;
           return MaterialPageRoute(
@@ -84,6 +78,9 @@ class MyApp extends ConsumerWidget {
         }
         if (settings.name == '/admin/users') {
           return MaterialPageRoute(builder: (context) => const UserManagementScreen());
+        }
+        if (settings.name == '/notifications') {
+          return MaterialPageRoute(builder: (context) => const NotificationsScreen());
         }
         return null;
       },

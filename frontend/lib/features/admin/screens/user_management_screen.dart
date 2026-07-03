@@ -7,6 +7,11 @@ import 'package:e_ticketing/features/admin/models/admin_user_model.dart';
 import 'package:e_ticketing/features/admin/providers/admin_user_provider.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
 
+const _roles = ['user', 'helpdesk', 'admin'];
+const _monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+String _formatDate(DateTime date) => '${_monthNames[date.month - 1]} ${date.day}, ${date.year}';
+
 class UserManagementScreen extends ConsumerStatefulWidget {
   const UserManagementScreen({super.key});
 
@@ -16,26 +21,158 @@ class UserManagementScreen extends ConsumerStatefulWidget {
 
 class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
   String _search = '';
-  bool _isUpdating = false;
 
-  Future<void> _toggleActive(AdminUser user) async {
-    setState(() => _isUpdating = true);
-    try {
-      final dio = ref.read(dioProvider).instance;
-      await dio.patch(
-        '${ApiConstants.usersAdmin}/${user.id}/active',
-        data: {'isActive': !user.isActive},
-      );
-      ref.invalidate(adminUsersProvider);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update user status')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isUpdating = false);
-    }
+  Future<void> _showEditUserSheet(AdminUser user) async {
+    final colors = context.colors;
+    final nameController = TextEditingController(text: user.name);
+    final emailController = TextEditingController(text: user.email);
+    String role = user.role;
+    bool isActive = user.isActive;
+    bool isSaving = false;
+    bool isSendingReset = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          Future<void> saveChanges() async {
+            setSheetState(() => isSaving = true);
+            try {
+              final dio = ref.read(dioProvider).instance;
+              await dio.patch('${ApiConstants.usersAdmin}/${user.id}', data: {
+                'name': nameController.text.trim(),
+                'email': emailController.text.trim(),
+                'role': role,
+                'isActive': isActive,
+              });
+              ref.invalidate(adminUsersProvider);
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('User updated successfully')),
+                );
+              }
+            } catch (_) {
+              setSheetState(() => isSaving = false);
+              if (ctx.mounted) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text('Failed to update user')),
+                );
+              }
+            }
+          }
+
+          Future<void> sendResetLink() async {
+            setSheetState(() => isSendingReset = true);
+            try {
+              final dio = ref.read(dioProvider).instance;
+              await dio.post(ApiConstants.resetPassword, data: {'email': user.email});
+              if (ctx.mounted) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text('Password reset link sent to ${user.email}')),
+                );
+              }
+            } catch (_) {
+              if (ctx.mounted) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text('Failed to send reset link')),
+                );
+              }
+            } finally {
+              setSheetState(() => isSendingReset = false);
+            }
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40, height: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceBorder,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text('Edit User', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                  Text('Joined ${_formatDate(user.createdAt)}', style: TextStyle(fontSize: 11, color: colors.textMuted)),
+                  const SizedBox(height: 20),
+
+                  Text('NAME', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 1)),
+                  const SizedBox(height: 6),
+                  TextField(controller: nameController, style: TextStyle(color: colors.textPrimary)),
+                  const SizedBox(height: 16),
+
+                  Text('EMAIL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 1)),
+                  const SizedBox(height: 6),
+                  TextField(controller: emailController, style: TextStyle(color: colors.textPrimary)),
+                  const SizedBox(height: 16),
+
+                  Text('ROLE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 1)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    initialValue: role,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: colors.surfaceBorder)),
+                    ),
+                    items: _roles.map((r) => DropdownMenuItem(value: r, child: Text(r.toUpperCase()))).toList(),
+                    onChanged: (val) => setSheetState(() => role = val ?? role),
+                  ),
+                  const SizedBox(height: 16),
+
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Active', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                    subtitle: Text(isActive ? 'User can sign in' : 'User is blocked from signing in',
+                      style: TextStyle(fontSize: 11, color: colors.textMuted)),
+                    value: isActive,
+                    onChanged: (val) => setSheetState(() => isActive = val),
+                  ),
+                  const SizedBox(height: 8),
+
+                  OutlinedButton.icon(
+                    onPressed: isSendingReset ? null : sendResetLink,
+                    icon: isSendingReset
+                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(LucideIcons.mail, size: 16),
+                    label: const Text('Send Password Reset Link'),
+                  ),
+                  const SizedBox(height: 24),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isSaving ? null : saveChanges,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.accent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: isSaving
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Save Changes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -85,46 +222,50 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final user = filtered[index];
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: colors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: colors.surfaceBorder),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: _roleColor(user.role).withValues(alpha: 0.15),
-                            child: Text(user.name.substring(0, 1).toUpperCase(),
-                              style: TextStyle(color: _roleColor(user.role), fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(user.name,
-                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                                Text(user.email,
-                                  style: TextStyle(fontSize: 11, color: colors.textMuted)),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    _buildRoleBadge(user.role),
-                                    const SizedBox(width: 8),
-                                    _buildActiveBadge(context, user.isActive),
-                                  ],
-                                ),
-                              ],
+                    return InkWell(
+                      onTap: () => _showEditUserSheet(user),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: colors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: colors.surfaceBorder),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: _roleColor(user.role).withValues(alpha: 0.15),
+                              child: Text(user.name.substring(0, 1).toUpperCase(),
+                                style: TextStyle(color: _roleColor(user.role), fontWeight: FontWeight.bold)),
                             ),
-                          ),
-                          Switch(
-                            value: user.isActive,
-                            onChanged: _isUpdating ? null : (_) => _toggleActive(user),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(user.name,
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                                  Text(user.email,
+                                    style: TextStyle(fontSize: 11, color: colors.textMuted)),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      _buildRoleBadge(user.role),
+                                      const SizedBox(width: 8),
+                                      _buildActiveBadge(context, user.isActive),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text('Joined ${_formatDate(user.createdAt)}',
+                                    style: TextStyle(fontSize: 10, color: colors.textDim)),
+                                ],
+                              ),
+                            ),
+                            Icon(LucideIcons.chevronRight, size: 18, color: colors.textDim),
+                          ],
+                        ),
                       ),
                     );
                   },

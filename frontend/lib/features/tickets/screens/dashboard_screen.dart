@@ -6,6 +6,7 @@ import 'package:e_ticketing/features/tickets/providers/ticket_provider.dart'; //
 import 'package:e_ticketing/features/auth/providers/auth_provider.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
 import 'package:e_ticketing/core/theme/status_colors.dart';
+import 'package:e_ticketing/features/notifications/providers/notification_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -14,6 +15,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider).value;
     final ticketsAsync = ref.watch(ticketsProvider);
+    final unreadCountAsync = ref.watch(unreadNotificationCountProvider);
     final colors = context.colors;
 
     return SingleChildScrollView(
@@ -47,13 +49,44 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: colors.accent,
-                child: Text(
-                  authState?.userName?.substring(0, 1).toUpperCase() ?? 'U',
-                  style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)
-                )
+              Row(
+                spacing: 12,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, '/notifications'),
+                    child: Container(
+                      height: 44, width: 44,
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: colors.surfaceBorder),
+                      ),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(LucideIcons.bell, size: 20, color: colors.textMuted),
+                          if ((unreadCountAsync.value ?? 0) > 0)
+                            Positioned(
+                              top: 8, right: 8,
+                              child: Container(
+                                width: 8, height: 8,
+                                decoration: BoxDecoration(color: colors.danger, shape: BoxShape.circle),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: colors.accent,
+                    child: Text(
+                      authState?.userName?.substring(0, 1).toUpperCase() ?? 'U',
+                      style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)
+                    )
+                  ),
+                ],
               ),
             ],
           ),

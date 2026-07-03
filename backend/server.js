@@ -11,6 +11,7 @@ const ticketRoutes = require('./routes/ticketRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use('/api/v1/tickets', ticketRoutes);
 app.use('/api/v1/comments', commentRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/upload', uploadRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // 404 handler
 app.use((req, res) => {
