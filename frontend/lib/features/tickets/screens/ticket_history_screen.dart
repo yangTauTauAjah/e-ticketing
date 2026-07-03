@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:e_ticketing/features/tickets/providers/ticket_history_provider.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 
 class TicketHistoryScreen extends ConsumerWidget {
   final String ticketId;
@@ -25,20 +26,21 @@ class TicketHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(ticketHistoryProvider(ticketId));
+    final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.background,
       appBar: AppBar(
         leading: const BackButton(),
-        title: const Text('Ticket History',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        title: Text('Ticket History',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
       ),
       body: historyAsync.when(
         data: (events) {
           if (events.isEmpty) {
-            return const Center(
+            return Center(
               child: Text('No history yet',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                style: TextStyle(color: colors.textMuted, fontSize: 13)),
             );
           }
           final sorted = [...events]..sort((a, b) => b.changedAt.compareTo(a.changedAt));
@@ -51,9 +53,9 @@ class TicketHistoryScreen extends ConsumerWidget {
               return Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFF1F5F9)),
+                  border: Border.all(color: colors.surfaceBorder),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,10 +63,10 @@ class TicketHistoryScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                        color: colors.accent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(_iconFor(event.fieldName), size: 16, color: const Color(0xFF0F172A)),
+                      child: Icon(_iconFor(event.fieldName), size: 16, color: colors.accent),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -72,10 +74,10 @@ class TicketHistoryScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(event.message,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colors.textPrimary)),
                           const SizedBox(height: 4),
                           Text(event.changedAt.toString().split('.')[0],
-                            style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                            style: TextStyle(fontSize: 10, color: colors.textMuted)),
                         ],
                       ),
                     ),

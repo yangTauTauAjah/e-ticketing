@@ -8,6 +8,7 @@ import 'package:e_ticketing/core/network/dio_client.dart';
 import 'package:e_ticketing/core/constants/api_constants.dart';
 import 'package:e_ticketing/features/tickets/providers/ticket_provider.dart';
 import 'package:e_ticketing/features/tickets/providers/ticket_history_provider.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 
 final ticketDetailProvider = FutureProvider.family<Ticket, String>((ref, id) async {
   final dio = ref.read(dioProvider).instance;
@@ -66,9 +67,10 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
     final authState = ref.watch(authProvider).value;
     final role = authState?.role ?? 'user';
     final canEdit = role == 'admin' || role == 'helpdesk';
+    final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.background,
       appBar: AppBar(
         leading: const BackButton(),
         actions: [
@@ -101,14 +103,15 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  gradient: HeroCard.gradient,
                   borderRadius: BorderRadius.circular(32),
+                  border: Border.all(color: HeroCard.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('TRANSACTION REGISTRY',
-                      style: TextStyle(color: Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                    Text('TRANSACTION REGISTRY',
+                      style: TextStyle(color: colors.accent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
                     Text('Case ID #${ticket.id.substring(0, 8).toUpperCase()}',
                       style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
@@ -148,17 +151,17 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
               // Edit panel — helpdesk and admin only
               if (canEdit) ...[
                 const SizedBox(height: 24),
-                _buildEditPanel(ticket, role),
+                _buildEditPanel(context, ticket, role),
               ],
 
               const SizedBox(height: 24),
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text('COMMENTS',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.textPrimary)),
               ),
               const SizedBox(height: 24),
-              ..._buildTimeline(ticket, authState?.id).map((item) => item.widget),
+              ..._buildTimeline(context, ticket, authState?.id).map((item) => item.widget),
               const SizedBox(height: 70),
             ],
           ),
@@ -166,17 +169,18 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
       ),
-      bottomSheet: _buildReplyBar(),
+      bottomSheet: _buildReplyBar(context),
     );
   }
 
-  Widget _buildEditPanel(Ticket ticket, String role) {
+  Widget _buildEditPanel(BuildContext context, Ticket ticket, String role) {
+    final colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: colors.surfaceBorder),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 2)),
         ],
@@ -184,10 +188,11 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('MANAGE TICKET',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)),
+          Text('MANAGE TICKET',
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 2)),
           const SizedBox(height: 16),
           _buildFieldDropdown<TicketStatus>(
+            context,
             label: 'STATUS',
             fieldKey: 'status',
             value: ticket.status,
@@ -199,6 +204,7 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
           ),
           const SizedBox(height: 12),
           _buildFieldDropdown<TicketPriority>(
+            context,
             label: 'PRIORITY',
             fieldKey: 'priority',
             value: ticket.priority,
@@ -210,6 +216,7 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
           ),
           const SizedBox(height: 12),
           _buildFieldDropdown<TicketCategory>(
+            context,
             label: 'CATEGORY',
             fieldKey: 'category',
             value: ticket.category,
@@ -227,27 +234,29 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
           ),
           if (role == 'admin') ...[
             const SizedBox(height: 12),
-            _buildAssignDropdown(ticket),
+            _buildAssignDropdown(context, ticket),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildFieldDropdown<T>({
+  Widget _buildFieldDropdown<T>(
+    BuildContext context, {
     required String label,
     required String fieldKey,
     required T value,
     required List<DropdownMenuItem<T>> items,
     required void Function(T?) onChanged,
   }) {
+    final colors = context.colors;
     final isLoading = _loadingField == fieldKey;
     return Row(
       children: [
         SizedBox(
           width: 84,
           child: Text(label,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textSecondary)),
         ),
         Expanded(
           child: isLoading
@@ -259,8 +268,8 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
                   isExpanded: true,
                   items: items,
                   onChanged: onChanged,
-                  style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                 ),
               ),
         ),
@@ -268,10 +277,12 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
     );
   }
 
-  Widget _buildAssignDropdown(Ticket ticket) {
+  Widget _buildAssignDropdown(BuildContext context, Ticket ticket) {
+    final colors = context.colors;
     final helpdesksAsync = ref.watch(helpdesksProvider);
     return helpdesksAsync.when(
       data: (helpdesks) => _buildFieldDropdown<String?>(
+        context,
         label: 'ASSIGN TO',
         fieldKey: 'assignedTo',
         value: helpdesks.any((h) => h.id == ticket.assignedToId) ? ticket.assignedToId : null,
@@ -284,38 +295,45 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
         ],
         onChanged: (val) => _patchTicket({'assignedToId': val}, 'assignedTo'),
       ),
-      loading: () => const Row(
+      loading: () => Row(
         children: [
           SizedBox(
             width: 84,
             child: Text('ASSIGN TO',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textSecondary)),
           ),
-          SizedBox(width: 16, height: 16,
+          const SizedBox(width: 16, height: 16,
             child: CircularProgressIndicator(strokeWidth: 2)),
         ],
       ),
-      error: (e, _) => const Text('Failed to load helpdesk users',
-        style: TextStyle(color: Colors.red, fontSize: 12)),
+      error: (e, _) => Text('Failed to load helpdesk users',
+        style: TextStyle(color: colors.danger, fontSize: 12)),
     );
   }
 
-  Widget _buildReplyBar() {
+  Widget _buildReplyBar(BuildContext context) {
+    final colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(20),
       color: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: colors.surfaceBorder),
           boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20)],
         ),
         child: Row(
           children: [
             Expanded(child: TextField(
               controller: _replyController,
-              decoration: const InputDecoration(hintText: 'message...', border: InputBorder.none),
+              style: TextStyle(color: colors.textPrimary),
+              decoration: InputDecoration(
+                hintText: 'message...',
+                hintStyle: TextStyle(color: colors.textMuted),
+                border: InputBorder.none,
+              ),
             )),
             IconButton(
               onPressed: () async {
@@ -337,7 +355,7 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
                   }
                 }
               },
-              icon: const Icon(LucideIcons.send, color: Color(0xFF0F172A)),
+              icon: Icon(LucideIcons.send, color: colors.accent),
             ),
           ],
         ),
@@ -345,7 +363,8 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
     );
   }
 
-  Widget _buildCommentBubble(String author, String text, {bool isMe = false}) {
+  Widget _buildCommentBubble(BuildContext context, String author, String text, {bool isMe = false}) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Align(
@@ -353,19 +372,20 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isMe ? const Color(0xFF0F172A) : Colors.white,
+            color: isMe ? colors.accent : colors.surface,
             borderRadius: BorderRadius.circular(20).copyWith(
               topLeft: isMe ? const Radius.circular(20) : Radius.zero,
               bottomRight: isMe ? Radius.zero : const Radius.circular(20),
             ),
+            border: isMe ? null : Border.all(color: colors.surfaceBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (!isMe) Text(author.toUpperCase(),
-                style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.blue)),
+                style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: colors.accent)),
               Text(text,
-                style: TextStyle(color: isMe ? Colors.white : const Color(0xFF334155))),
+                style: TextStyle(color: isMe ? Colors.white : colors.textSecondary)),
             ],
           ),
         ),
@@ -373,29 +393,30 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
     );
   }
 
-  Widget _buildHistoryMessage(String message) {
+  Widget _buildHistoryMessage(BuildContext context, String message) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Center(
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic),
+          style: TextStyle(fontSize: 11, color: colors.textMuted, fontStyle: FontStyle.italic),
         ),
       ),
     );
   }
 
-  List<_TimelineItem> _buildTimeline(Ticket ticket, String? currentUserId) {
+  List<_TimelineItem> _buildTimeline(BuildContext context, Ticket ticket, String? currentUserId) {
     final items = <_TimelineItem>[];
     for (final c in ticket.comments) {
       items.add(_TimelineItem(
         c.createdAt,
-        _buildCommentBubble(c.authorName, c.content, isMe: c.authorId == currentUserId),
+        _buildCommentBubble(context, c.authorName, c.content, isMe: c.authorId == currentUserId),
       ));
     }
     for (final h in ticket.history) {
-      items.add(_TimelineItem(h.changedAt, _buildHistoryMessage(h.message)));
+      items.add(_TimelineItem(h.changedAt, _buildHistoryMessage(context, h.message)));
     }
     items.sort((a, b) => a.time.compareTo(b.time));
     return items;

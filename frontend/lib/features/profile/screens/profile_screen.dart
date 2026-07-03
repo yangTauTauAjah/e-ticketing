@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:e_ticketing/features/auth/providers/auth_provider.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -10,13 +11,13 @@ class ProfileScreen extends ConsumerWidget {
   // Function to handle logout based on BACKEND_SPEC.md
   Future<void> _handleLogout(WidgetRef ref, BuildContext context) async {
     const storage = FlutterSecureStorage();
-    
+
     // 1. Clear the local JWT token
     await storage.delete(key: 'jwt_token');
-    
+
     // 2. Reset the Auth Notifier state
     ref.read(authProvider.notifier).logout();
-    
+
     // 3. Navigate back to Login
     if (context.mounted) {
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
@@ -27,6 +28,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the real auth state
     final authState = ref.watch(authProvider).value;
+    final colors = context.colors;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
@@ -42,7 +44,7 @@ class ProfileScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A), 
+                        color: colors.accent.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(45),
                         boxShadow: [
                           BoxShadow(
@@ -53,24 +55,24 @@ class ProfileScreen extends ConsumerWidget {
                         ],
                       ),
                       child: CircleAvatar(
-                        radius: 65, 
-                        backgroundColor: Colors.blue, 
+                        radius: 65,
+                        backgroundColor: colors.accent,
                         child: Text(
-                          authState?.userName?.substring(0, 1).toUpperCase() ?? 'U', 
+                          authState?.userName?.substring(0, 1).toUpperCase() ?? 'U',
                           style: const TextStyle(fontSize: 48, color: Colors.white, fontWeight: FontWeight.bold)
                         )
                       ),
                     ),
                     Container(
-                      height: 32, 
-                      width: 32, 
+                      height: 32,
+                      width: 32,
                       decoration: BoxDecoration(
-                        color: Colors.green, 
-                        shape: BoxShape.circle, 
-                        border: Border.all(color: Colors.white, width: 4),
+                        color: colors.success,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colors.background, width: 4),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.green.withValues(alpha: 0.3),
+                            color: colors.success.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           )
@@ -81,12 +83,12 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  authState?.userName ?? "User", 
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))
+                  authState?.userName ?? "User",
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: colors.textPrimary)
                 ),
                 Text(
-                  "${authState?.role?.toUpperCase() ?? 'USER'} REGISTRY ACCESS", 
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)
+                  "${authState?.role?.toUpperCase() ?? 'USER'} REGISTRY ACCESS",
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 2)
                 ),
               ],
             ),
@@ -96,21 +98,22 @@ class ProfileScreen extends ConsumerWidget {
           // Status Cards
           Row(
             children: [
-              _buildSmallStatCard("AFFILIATION", "IT SERVICES"),
+              _buildSmallStatCard(context, "AFFILIATION", "IT SERVICES"),
               const SizedBox(width: 16),
               _buildSmallStatCard(
-                "STATUS", 
-                authState?.isAuthenticated == true ? "AUTHENTICATED" : "OFFLINE", 
-                textColor: Colors.green
+                context,
+                "STATUS",
+                authState?.isAuthenticated == true ? "AUTHENTICATED" : "OFFLINE",
+                textColor: colors.success
               ),
             ],
           ),
           const SizedBox(height: 24),          // Account Management List
           Container(
             decoration: BoxDecoration(
-              color: Colors.white, 
-              borderRadius: BorderRadius.circular(32), 
-              border: Border.all(color: const Color(0xFFF1F5F9)),
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: colors.surfaceBorder),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.08),
@@ -122,21 +125,24 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               children: [
                 _buildProfileAction(
+                  context,
                   LucideIcons.settings, "System Configuration", "Adjust registry preferences",
                   onTap: () => Navigator.pushNamed(context, '/settings'),
                 ),
-                _buildProfileAction(LucideIcons.shield, "Security & Privacy", "Biometric & Session keys"),
-                _buildProfileAction(LucideIcons.bell, "Notification Stream", "Push and email routing"),
+                _buildProfileAction(context, LucideIcons.shield, "Security & Privacy", "Biometric & Session keys"),
+                _buildProfileAction(context, LucideIcons.bell, "Notification Stream", "Push and email routing"),
                 if (authState?.role == 'admin')
                   _buildProfileAction(
+                    context,
                     LucideIcons.users, "User Management", "Manage accounts & roles",
                     onTap: () => Navigator.pushNamed(context, '/admin/users'),
                   ),
                 // Logout Action
                 _buildProfileAction(
-                  LucideIcons.logOut, 
-                  "Logout", 
-                  "Safely exit registry", 
+                  context,
+                  LucideIcons.logOut,
+                  "Logout",
+                  "Safely exit registry",
                   isDestructive: true,
                   onTap: () => _handleLogout(ref, context),
                 ),
@@ -147,14 +153,15 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
-  Widget _buildSmallStatCard(String label, String value, {Color? textColor}) {
+  Widget _buildSmallStatCard(BuildContext context, String label, String value, {Color? textColor}) {
+    final colors = context.colors;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white, 
-          borderRadius: BorderRadius.circular(24), 
-          border: Border.all(color: const Color(0xFFF1F5F9)),
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: colors.surfaceBorder),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
@@ -166,15 +173,16 @@ class ProfileScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8))),
-            Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor ?? const Color(0xFF0F172A))),
+            Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.textMuted)),
+            Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor ?? colors.textPrimary)),
           ],
         ),
       ),
     );
   }
-  Widget _buildProfileAction(IconData icon, String title, String sub, {bool isDestructive = false, VoidCallback? onTap}) {
-    final color = isDestructive ? Colors.red : const Color(0xFF0F172A);
+  Widget _buildProfileAction(BuildContext context, IconData icon, String title, String sub, {bool isDestructive = false, VoidCallback? onTap}) {
+    final colors = context.colors;
+    final color = isDestructive ? colors.danger : colors.textPrimary;
     return Container(
       decoration: BoxDecoration(
         boxShadow: [
@@ -191,7 +199,7 @@ class ProfileScreen extends ConsumerWidget {
         leading: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.05), 
+            color: color.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
@@ -205,7 +213,7 @@ class ProfileScreen extends ConsumerWidget {
         ),
         title: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
         subtitle: Text(sub.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color.withValues(alpha: 0.4))),
-        trailing: const Icon(LucideIcons.chevronRight, size: 22, color: Color(0xFFE2E8F0)),
+        trailing: Icon(LucideIcons.chevronRight, size: 22, color: colors.textDim),
       ),
     );
   }

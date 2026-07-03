@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Added for ref access
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 
 // Change to ConsumerStatefulWidget to access "ref"
 class CreateTicketScreen extends ConsumerStatefulWidget {
@@ -19,12 +20,12 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   // Define Controllers
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
-  
+
   String selectedCategory = 'technical'; // Match backend enum
   String selectedPriority = 'medium';
   File? _selectedImage;
   bool _isLoading = false;
-  
+
   // Validation error messages
   String? _titleError;
   String? _descError;
@@ -39,7 +40,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   // Validation methods based on backend spec
   bool _validateInputs() {
     bool isValid = true;
-    
+
     // Validate title
     if (_titleController.text.isEmpty) {
       _titleError = "Incident header is required";
@@ -53,7 +54,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     } else {
       _titleError = null;
     }
-    
+
     // Validate description
     if (_descController.text.isEmpty) {
       _descError = "Detailed narrative is required";
@@ -64,19 +65,19 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     } else {
       _descError = null;
     }
-    
+
     // Validate category
     final validCategories = ['billing', 'technical', 'account', 'general', 'feature_request'];
     if (!validCategories.contains(selectedCategory)) {
       isValid = false;
     }
-    
+
     // Validate priority
     final validPriorities = ['low', 'medium', 'high', 'critical'];
     if (!validPriorities.contains(selectedPriority)) {
       isValid = false;
     }
-    
+
     return isValid;
   }
 
@@ -106,7 +107,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     setState(() => _isLoading = true);
     // Use "ref" provided by ConsumerState
     final dio = ref.read(dioProvider).instance;
-    
+
     try {
       List<String> attachmentIds = [];
 
@@ -154,6 +155,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Scaffold(
       appBar: AppBar(leading: const BackButton()),
       body: SingleChildScrollView(
@@ -161,28 +163,28 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Lodge Incident", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-            const Text("Official Support Registry Entry", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)),
+            Text("Lodge Incident", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+            Text("Official Support Registry Entry", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 2)),
             const SizedBox(height: 32),
-            
-            _buildLabel("Incident Header"),
-            _buildInputField(_titleController, "e.g., Access credentials expired", error: _titleError),
+
+            _buildLabel(context, "Incident Header"),
+            _buildInputField(context, _titleController, "e.g., Access credentials expired", error: _titleError),
             const SizedBox(height: 24),
 
             Row(
               children: [
-                Expanded(child: _buildDropdown("Registry Category", ['technical', 'billing', 'account', 'general', 'feature_request'], selectedCategory, (val) => setState(() => selectedCategory = val!))),
+                Expanded(child: _buildDropdown(context, "Registry Category", ['technical', 'billing', 'account', 'general', 'feature_request'], selectedCategory, (val) => setState(() => selectedCategory = val!))),
                 const SizedBox(width: 16),
-                Expanded(child: _buildDropdown("Risk Assessment", ['low', 'medium', 'high', 'critical'], selectedPriority, (val) => setState(() => selectedPriority = val!))),
+                Expanded(child: _buildDropdown(context, "Risk Assessment", ['low', 'medium', 'high', 'critical'], selectedPriority, (val) => setState(() => selectedPriority = val!))),
               ],
             ),
             const SizedBox(height: 24),
 
-            _buildLabel("Detailed Narrative"),
-            _buildInputField(_descController, "Provide a comprehensive breakdown...", maxLines: 5, error: _descError),
+            _buildLabel(context, "Detailed Narrative"),
+            _buildInputField(context, _descController, "Provide a comprehensive breakdown...", maxLines: 5, error: _descError),
             const SizedBox(height: 24),
 
-            _buildLabel("Evidence Log"),
+            _buildLabel(context, "Evidence Log"),
             if (_selectedImage != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -198,9 +200,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
               ),
             Row(
               children: [
-                Expanded(child: _buildEvidenceButton(LucideIcons.camera, "Capture", () => _pickImage(ImageSource.camera))),
+                Expanded(child: _buildEvidenceButton(context, LucideIcons.camera, "Capture", () => _pickImage(ImageSource.camera))),
                 const SizedBox(width: 16),
-                Expanded(child: _buildEvidenceButton(LucideIcons.image, "Files", () => _pickImage(ImageSource.gallery))),
+                Expanded(child: _buildEvidenceButton(context, LucideIcons.image, "Files", () => _pickImage(ImageSource.gallery))),
               ],
             ),
             const SizedBox(height: 40),
@@ -209,12 +211,12 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _isLoading ? null : _submitTicket,
-                icon: _isLoading 
+                icon: _isLoading
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Icon(LucideIcons.send, size: 18, color: Colors.white),
                 label: Text(_isLoading ? "Synchronizing..." : "Submit Record", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F172A),
+                  backgroundColor: colors.accent,
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   elevation: 4,
@@ -229,20 +231,22 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   }
 
   // Updated helpers to use controllers and callbacks
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(BuildContext context, String text) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, left: 4),
-      child: Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1)),
+      child: Text(text, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 1)),
     );
   }
 
-  Widget _buildInputField(TextEditingController controller, String hint, {int maxLines = 1, String? error}) {
+  Widget _buildInputField(BuildContext context, TextEditingController controller, String hint, {int maxLines = 1, String? error}) {
+    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -255,30 +259,29 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
           child: TextField(
             controller: controller,
             maxLines: maxLines,
+            style: TextStyle(color: colors.textPrimary),
             onChanged: (_) => setState(() => _validateInputs()),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
-              // filled: true,
-              // fillColor: Colors.white,
+              hintStyle: TextStyle(color: colors.textDim),
               errorText: error,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide(
-                  color: error != null ? Colors.red.shade300 : const Color(0xFFF1F5F9),
+                  color: error != null ? colors.danger : colors.surfaceBorder,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide(
-                  color: error != null ? Colors.red.shade300 : const Color(0xFFF1F5F9),
+                  color: error != null ? colors.danger : colors.surfaceBorder,
                   width: error != null ? 2 : 1,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide(
-                  color: error != null ? Colors.red.shade300 : Colors.blue,
+                  color: error != null ? colors.danger : colors.accent,
                   width: 2,
                 ),
               ),
@@ -289,12 +292,13 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       ],
     );
   }
-  
-  Widget _buildDropdown(String label, List<String> items, String selected, ValueChanged<String?> onChanged) {
+
+  Widget _buildDropdown(BuildContext context, String label, List<String> items, String selected, ValueChanged<String?> onChanged) {
+    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel(label),
+        _buildLabel(context, label),
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
@@ -309,14 +313,15 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colors.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFF1F5F9)),
+              border: Border.all(color: colors.surfaceBorder),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: selected,
                 isExpanded: true,
+                style: TextStyle(color: colors.textPrimary),
                 items: items.map((i) => DropdownMenuItem(value: i, child: Text(i.replaceAll('_', ' ').toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)))).toList(),
                 onChanged: onChanged,
               ),
@@ -326,17 +331,18 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       ],
     );
   }
-  
-  Widget _buildEvidenceButton(IconData icon, String label, VoidCallback onTap) {
+
+  Widget _buildEvidenceButton(BuildContext context, IconData icon, String label, VoidCallback onTap) {
+    final colors = context.colors;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
       child: Container(
         height: 120,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFF1F5F9)),
+          border: Border.all(color: colors.surfaceBorder),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
@@ -348,9 +354,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: const Color(0xFF94A3B8)),
+            Icon(icon, color: colors.textMuted),
             const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8))),
+            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted)),
           ],
         ),
       ),

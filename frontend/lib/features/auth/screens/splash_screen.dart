@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:e_ticketing/features/auth/providers/auth_provider.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
@@ -18,9 +19,9 @@ class SplashScreen extends ConsumerWidget {
       });
     });
 
-    return const Scaffold(
-      backgroundColor: Color(0xFF0F172A),
-      body: Center(
+    return Scaffold(
+      backgroundColor: AppColors.dark.background,
+      body: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

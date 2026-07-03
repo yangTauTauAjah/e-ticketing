@@ -2,21 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_detail_screen.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
+import 'package:e_ticketing/core/theme/status_colors.dart';
 
 class TicketTrackingScreen extends ConsumerWidget {
   final String ticketId;
   const TicketTrackingScreen({super.key, required this.ticketId});
-
-  Color _statusColor(String? status) {
-    switch (status) {
-      case 'open': return Colors.blue;
-      case 'in_progress': return Colors.orange;
-      case 'on_hold': return Colors.amber;
-      case 'closed': return Colors.green;
-      case 'reopened': return Colors.red;
-      default: return Colors.grey;
-    }
-  }
 
   IconData _statusIcon(String? status) {
     switch (status) {
@@ -32,13 +23,14 @@ class TicketTrackingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ticketAsync = ref.watch(ticketDetailProvider(ticketId));
+    final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.background,
       appBar: AppBar(
         leading: const BackButton(),
-        title: const Text('Ticket Tracking',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        title: Text('Ticket Tracking',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
       ),
       body: ticketAsync.when(
         data: (ticket) {
@@ -48,8 +40,8 @@ class TicketTrackingScreen extends ConsumerWidget {
             ..sort((a, b) => a.changedAt.compareTo(b.changedAt));
 
           if (statusEvents.isEmpty) {
-            return const Center(child: Text('No tracking data yet',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)));
+            return Center(child: Text('No tracking data yet',
+              style: TextStyle(color: colors.textMuted, fontSize: 13)));
           }
 
           return ListView(
@@ -59,8 +51,9 @@ class TicketTrackingScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  gradient: HeroCard.gradient,
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: HeroCard.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,7 +74,7 @@ class TicketTrackingScreen extends ConsumerWidget {
                 final index = entry.key;
                 final event = entry.value;
                 final isLast = index == statusEvents.length - 1;
-                final color = _statusColor(event.newValue);
+                final color = StatusColors.forStatusName(event.newValue);
 
                 return IntrinsicHeight(
                   child: Row(
@@ -107,7 +100,7 @@ class TicketTrackingScreen extends ConsumerWidget {
                                 child: Container(
                                   width: 2,
                                   margin: const EdgeInsets.symmetric(vertical: 4),
-                                  color: const Color(0xFFE2E8F0),
+                                  color: colors.surfaceBorder,
                                 ),
                               ),
                           ],
@@ -122,10 +115,10 @@ class TicketTrackingScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(event.message,
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colors.textPrimary)),
                               const SizedBox(height: 4),
                               Text(event.changedAt.toString().split('.')[0],
-                                style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                                style: TextStyle(fontSize: 10, color: colors.textMuted)),
                             ],
                           ),
                         ),

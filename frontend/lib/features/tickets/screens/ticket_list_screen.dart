@@ -7,6 +7,8 @@ import 'package:e_ticketing/features/auth/providers/auth_provider.dart';
 import 'package:e_ticketing/features/tickets/providers/helpdesk_provider.dart';
 import 'package:e_ticketing/core/network/dio_client.dart';
 import 'package:e_ticketing/core/constants/api_constants.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
+import 'package:e_ticketing/core/theme/status_colors.dart';
 
 class TicketListScreen extends ConsumerStatefulWidget {
   const TicketListScreen({super.key});
@@ -22,19 +24,6 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   String? _selectedHelpdeskId;
   Map<String, String> _filterParams = const <String, String>{};
 
-  // Helper to get priority color
-  Color _getPriorityColor(TicketPriority priority) {
-    switch (priority) {
-      case TicketPriority.low:
-        return const Color(0xFF10B981); // Green
-      case TicketPriority.medium:
-        return const Color(0xFFF59E0B); // Amber
-      case TicketPriority.high:
-        return const Color(0xFFEF4444); // Red
-      case TicketPriority.critical:
-        return const Color(0xFF7C3AED); // Purple
-    }
-  }
   Future<void> _patchAssign(String ticketId, String? helpdeskId) async {
     try {
       final dio = ref.read(dioProvider).instance;
@@ -57,6 +46,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   }
 
   void _showAssignSheet(Ticket ticket) {
+    final colors = context.colors;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -72,7 +62,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
               Container(
                 width: 40, height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
+                  color: colors.surfaceBorder,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -80,7 +70,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                 padding: const EdgeInsets.all(20),
                 child: Text(
                   'Assign Helpdesk — ${ticket.title}',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -95,7 +85,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                         title: const Text('Unassigned',
                           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                         trailing: ticket.assignedToId == null
-                          ? const Icon(LucideIcons.check, size: 16, color: Color(0xFF0F172A))
+                          ? Icon(LucideIcons.check, size: 16, color: colors.textPrimary)
                           : null,
                         onTap: () {
                           Navigator.pop(ctx);
@@ -106,9 +96,9 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                         title: Text(h.name,
                           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                         subtitle: Text(h.email,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                          style: TextStyle(fontSize: 11, color: colors.textMuted)),
                         trailing: ticket.assignedToId == h.id
-                          ? const Icon(LucideIcons.check, size: 16, color: Color(0xFF0F172A))
+                          ? Icon(LucideIcons.check, size: 16, color: colors.textPrimary)
                           : null,
                         onTap: () {
                           Navigator.pop(ctx);
@@ -126,7 +116,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                 error: (e, _) => Padding(
                   padding: const EdgeInsets.all(32),
                   child: Text('Error loading helpdesk users: $e',
-                    style: const TextStyle(color: Colors.red)),
+                    style: TextStyle(color: colors.danger)),
                 ),
               ),
             ],
@@ -141,6 +131,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
     final ticketsAsync = ref.watch(filteredTicketsProvider(_filterParams));
     final authState = ref.watch(authProvider).value;
     final isAdmin = authState?.role == 'admin';
+    final colors = context.colors;
 
     return Scaffold(
       body: Column(
@@ -153,9 +144,9 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      border: Border.all(color: colors.surfaceBorder),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.08),
@@ -166,9 +157,11 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                     ),
                     child: TextField(
                       onChanged: (value) => setState(() => searchQuery = value),
-                      decoration: const InputDecoration(
-                        icon: Icon(LucideIcons.search, size: 18, color: Color(0xFF94A3B8)),
+                      style: TextStyle(color: colors.textPrimary),
+                      decoration: InputDecoration(
+                        icon: Icon(LucideIcons.search, size: 18, color: colors.textMuted),
                         hintText: "Search tickets...",
+                        hintStyle: TextStyle(color: colors.textDim),
                         border: InputBorder.none,
                       ),
                     ),
@@ -178,7 +171,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
+                    color: colors.accent,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -206,12 +199,12 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                 final filter = filters[index];
                 final isSelected = selectedFilter == filter;
                 return ChoiceChip(
-                  label: Text(filter, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : const Color(0xFF94A3B8))),
+                  label: Text(filter, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isSelected ? Colors.white : colors.textMuted)),
                   selected: isSelected,
                   onSelected: (_) => setState(() => selectedFilter = filter),
-                  selectedColor: const Color(0xFF0F172A),
-                  backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: isSelected ? Colors.transparent : const Color(0xFFF1F5F9))),
+                  selectedColor: colors.accent,
+                  backgroundColor: colors.surface,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: isSelected ? Colors.transparent : colors.surfaceBorder)),
                   showCheckmark: false,
                   elevation: 2,
                   shadowColor: Colors.black.withValues(alpha: 0.08),
@@ -232,7 +225,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                     labelStyle: const TextStyle(fontSize: 12),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFF1F5F9))),
+                      borderSide: BorderSide(color: colors.surfaceBorder)),
                   ),
                   items: [
                     const DropdownMenuItem<String?>(value: null, child: Text('All helpdesks')),
@@ -259,9 +252,9 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
               data: (tickets) {
                 // Apply Search and Filter logic locally
                 final filteredTickets = tickets.where((ticket) {
-                  final matchesFilter = selectedFilter == 'ALL' || 
+                  final matchesFilter = selectedFilter == 'ALL' ||
                       ticket.status.name.toUpperCase().replaceAll('_', ' ') == selectedFilter;
-                  final matchesSearch = ticket.title.toLowerCase().contains(searchQuery.toLowerCase()) || 
+                  final matchesSearch = ticket.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
                       ticket.id.toLowerCase().contains(searchQuery.toLowerCase());
                   return matchesFilter && matchesSearch;
                 }).toList();
@@ -273,18 +266,18 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                 return ListView.builder(
                   padding: const EdgeInsets.all(24),
                   itemCount: filteredTickets.length,
-                  itemBuilder: (context, index) => _buildTicketCard(filteredTickets[index], isAdmin),
+                  itemBuilder: (context, index) => _buildTicketCard(context, filteredTickets[index], isAdmin),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(child: Text("Sync Error: $err")),
-            ),          
+            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, '/create-ticket'),
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: colors.accent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: const Icon(LucideIcons.plus, color: Colors.white, size: 32),
       ),
@@ -292,14 +285,15 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
   }
 
   // Helper Widget updated to use Ticket Model
-  Widget _buildTicketCard(Ticket ticket, bool isAdmin) {
+  Widget _buildTicketCard(BuildContext context, Ticket ticket, bool isAdmin) {
+    final colors = context.colors;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: colors.surfaceBorder),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -317,12 +311,12 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
               children: [
                 _buildBadge(ticket.status.name.toUpperCase(), ticket.statusColor),
                 const SizedBox(width: 8),
-                _buildBadge(ticket.priority.name.toUpperCase(), _getPriorityColor(ticket.priority)),
+                _buildBadge(ticket.priority.name.toUpperCase(), StatusColors.forPriority(ticket.priority)),
                 const Spacer(),
                 if (isAdmin)
                   IconButton(
                     onPressed: () => _showAssignSheet(ticket),
-                    icon: const Icon(LucideIcons.userPlus, size: 16, color: Color(0xFF64748B)),
+                    icon: Icon(LucideIcons.userPlus, size: 16, color: colors.textSecondary),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     tooltip: 'Assign helpdesk',
@@ -330,32 +324,32 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
                 if (isAdmin) const SizedBox(width: 8),
                 Flexible(child: Text(ticket.createdAt.toString().split(' ')[0],
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8)))),
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: colors.textMuted))),
               ],
             ),
             const SizedBox(height: 16),
-            Text(ticket.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            Text(ticket.title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
             const SizedBox(height: 8),
             Text(
               ticket.description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+              style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.4),
             ),
             const SizedBox(height: 16),
-            const Divider(color: Color(0xFFF8FAFC)),
+            Divider(color: colors.background),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("ID: ${ticket.id.substring(0, 8).toUpperCase()}", 
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.bold)),
+                Text("ID: ${ticket.id.substring(0, 8).toUpperCase()}",
+                  style: TextStyle(fontFamily: 'monospace', fontSize: 10, color: colors.textMuted, fontWeight: FontWeight.bold)),
                 Row(
                   children: [
-                    const Icon(LucideIcons.messageSquare, size: 14, color: Color(0xFFCBD5E1)),
+                    Icon(LucideIcons.messageSquare, size: 14, color: colors.textDim),
                     const SizedBox(width: 4),
-                    Text("${ticket.commentCount}", style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                    Text("${ticket.commentCount}", style: TextStyle(fontSize: 10, color: colors.textMuted)),
                     const SizedBox(width: 12),
-                    const Icon(LucideIcons.arrowRight, size: 18, color: Color(0xFFE2E8F0)),
+                    Icon(LucideIcons.arrowRight, size: 18, color: colors.textDim),
                   ],
                 ),
               ],

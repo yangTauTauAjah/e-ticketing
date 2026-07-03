@@ -5,6 +5,7 @@ import 'package:e_ticketing/widgets/auth_text_field.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:e_ticketing/features/auth/screens/register_screen.dart';
 import 'package:e_ticketing/features/auth/screens/reset_password.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -34,6 +35,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
+    final colors = context.colors;
 
     // Listen to auth state changes and navigate if authenticated
     ref.listen(authProvider, (previous, next) {
@@ -64,7 +66,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Container(
                 height: 100, width: 100,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A), 
+                  color: colors.accent.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -74,12 +76,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     )
                   ],
                 ),
-                child: Center(child: Container(height: 40, width: 40, decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(8)))),
+                child: Center(child: Container(height: 40, width: 40, decoration: BoxDecoration(color: colors.accent, borderRadius: BorderRadius.circular(8)))),
               ),
             ),
             const SizedBox(height: 40),
-            const Text("Secure Access", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2)),
-            const Text("Sign in to E-Ticket", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), letterSpacing: -1)),
+            Text("Secure Access", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 2)),
+            Text("Sign in to E-Ticket", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: colors.textPrimary, letterSpacing: -1)),
             const SizedBox(height: 40),
             AuthTextField(label: "Email Address", hint: "name@company.com", icon: LucideIcons.mail, controller: emailController),
             const SizedBox(height: 24),
@@ -89,21 +91,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Password", style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1.5)),
+                    Text("Password", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 1.5)),
                     TextButton(
                       onPressed: () {
                         Navigator.push(context, MaterialPageRoute(builder: (context) => const ResetPasswordScreen()));
                       },
-                      child: const Text("Forgot password?", style: TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                      child: Text("Forgot password?", style: TextStyle(fontSize: 10, color: colors.accent, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                     ),
                   ]
                 ),
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colors.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFF1F5F9)), // slate-100
+                    border: Border.all(color: colors.surfaceBorder),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.15),
@@ -115,11 +117,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: TextField(
                     controller: passController,
                     obscureText: true,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colors.textPrimary),
                     decoration: InputDecoration(
-                      prefixIcon: Icon(LucideIcons.lock, size: 18, color: const Color(0xFF94A3B8)),
+                      prefixIcon: Icon(LucideIcons.lock, size: 18, color: colors.textMuted),
                       hintText: "••••••••",
-                      hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
+                      hintStyle: TextStyle(color: colors.textDim),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 18),
                     ),
@@ -127,20 +129,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: auth.isLoading ? null : () => ref.read(authProvider.notifier).login(emailController.text, passController.text),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F172A),
+                  backgroundColor: colors.accent,
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   elevation: 4,
                   shadowColor: Colors.black.withValues(alpha: 0.15),
                 ),
-                child: auth.isLoading 
+                child: auth.isLoading
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Text("Continue To Dashboard", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 16)),
               ),
@@ -149,10 +151,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             Center(
               child: TextButton(
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen())),
-                child: const Text.rich(TextSpan(children: [
-                  TextSpan(text: "New to the platform? ", style: TextStyle(color: Color(0xFF94A3B8))),
-                  TextSpan(text: "Register an account", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
-                ], style: TextStyle(fontSize: 10, letterSpacing: 1))),
+                child: Text.rich(TextSpan(children: [
+                  TextSpan(text: "New to the platform? ", style: TextStyle(color: colors.textMuted)),
+                  TextSpan(text: "Register an account", style: TextStyle(color: colors.accent, fontWeight: FontWeight.bold)),
+                ], style: const TextStyle(fontSize: 10, letterSpacing: 1))),
               ),
             )
           ],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:e_ticketing/widgets/auth_text_field.dart';
 import 'package:e_ticketing/features/auth/providers/auth_provider.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -41,6 +42,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
+    final colors = context.colors;
 
     // Listen to auth state changes and navigate if authenticated
     ref.listen(authProvider, (previous, next) {
@@ -70,21 +72,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "New Account",
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF94A3B8),
+                color: colors.textMuted,
                 letterSpacing: 2,
               ),
             ),
-            const Text(
+            Text(
               "Join E-Ticket",
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: colors.textPrimary,
                 letterSpacing: -1,
               ),
             ),
@@ -161,7 +163,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       }
                     },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F172A),
+                  backgroundColor: colors.accent,
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   elevation: 4,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:e_ticketing/core/theme/theme_provider.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -20,8 +21,9 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          _buildSection('APPEARANCE', [
+          _buildSection(context, 'APPEARANCE', [
             _buildSwitchTile(
+              context,
               icon: isDark ? LucideIcons.moon : LucideIcons.sun,
               title: 'Dark Mode',
               subtitle: isDark ? 'Dark theme active' : 'Light theme active',
@@ -30,8 +32,9 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ]),
           const SizedBox(height: 24),
-          _buildSection('NOTIFICATIONS', [
+          _buildSection(context, 'NOTIFICATIONS', [
             _buildSwitchTile(
+              context,
               icon: LucideIcons.bell,
               title: 'Push Notifications',
               subtitle: 'Ticket status updates',
@@ -44,21 +47,22 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children) {
+  Widget _buildSection(BuildContext context, String title, List<Widget> children) {
+    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Text(title,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold,
-              color: Color(0xFF94A3B8), letterSpacing: 2)),
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold,
+              color: colors.textMuted, letterSpacing: 2)),
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
+            border: Border.all(color: colors.surfaceBorder),
           ),
           child: Column(children: children),
         ),
@@ -66,26 +70,28 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSwitchTile({
+  Widget _buildSwitchTile(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
     required bool value,
     required ValueChanged<bool>? onChanged,
   }) {
+    final colors = context.colors;
     return SwitchListTile(
       secondary: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+          color: colors.accent.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, size: 18, color: const Color(0xFF0F172A)),
+        child: Icon(icon, size: 18, color: colors.accent),
       ),
       title: Text(title,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
       subtitle: Text(subtitle,
-        style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+        style: TextStyle(fontSize: 11, color: colors.textMuted)),
       value: value,
       onChanged: onChanged,
     );

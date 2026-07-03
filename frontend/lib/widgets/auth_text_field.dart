@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 // import 'package:lucide_icons/lucide_icons.dart';
 
 class AuthTextField extends StatelessWidget {
@@ -19,17 +20,18 @@ class AuthTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, 
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 1.5)),
+        Text(label,
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 1.5)),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFF1F5F9)), // slate-100
+            border: Border.all(color: colors.surfaceBorder),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.15),
@@ -41,11 +43,11 @@ class AuthTextField extends StatelessWidget {
           child: TextField(
             controller: controller,
             obscureText: isPassword,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colors.textPrimary),
             decoration: InputDecoration(
-              prefixIcon: Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+              prefixIcon: Icon(icon, size: 18, color: colors.textMuted),
               hintText: hint,
-              hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
+              hintStyle: TextStyle(color: colors.textDim),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(vertical: 18),
             ),

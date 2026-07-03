@@ -1,5 +1,6 @@
 import 'package:e_ticketing/features/tickets/models/comment_model.dart';
 import 'package:e_ticketing/features/tickets/models/ticket_history_model.dart';
+import 'package:e_ticketing/core/theme/status_colors.dart';
 import 'package:flutter/material.dart';
 
 // Mapping your DB enums to Dart
@@ -108,12 +109,5 @@ class Ticket {
   }
 
   // Helper for UI styling (Status Colors)
-  Color get statusColor {
-    switch (status) {
-      case TicketStatus.open: return Colors.blue;
-      case TicketStatus.in_progress: return Colors.orange;
-      case TicketStatus.closed: return Colors.green; // Mapping closed/resolved
-      default: return Colors.grey;
-    }
-  }
+  Color get statusColor => StatusColors.forStatus(status);
 }

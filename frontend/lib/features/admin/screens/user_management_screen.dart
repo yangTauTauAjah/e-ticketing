@@ -5,6 +5,7 @@ import 'package:e_ticketing/core/constants/api_constants.dart';
 import 'package:e_ticketing/core/network/dio_client.dart';
 import 'package:e_ticketing/features/admin/models/admin_user_model.dart';
 import 'package:e_ticketing/features/admin/providers/admin_user_provider.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 
 class UserManagementScreen extends ConsumerStatefulWidget {
   const UserManagementScreen({super.key});
@@ -40,13 +41,14 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(adminUsersProvider);
+    final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.background,
       appBar: AppBar(
         leading: const BackButton(),
-        title: const Text('User Management',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+        title: Text('User Management',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
       ),
       body: Column(
         children: [
@@ -54,13 +56,14 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
             padding: const EdgeInsets.all(24),
             child: TextField(
               onChanged: (v) => setState(() => _search = v),
+              style: TextStyle(color: colors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Search users...',
-                prefixIcon: const Icon(LucideIcons.search, size: 18, color: Color(0xFF94A3B8)),
+                prefixIcon: Icon(LucideIcons.search, size: 18, color: colors.textMuted),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFFF1F5F9))),
+                  borderSide: BorderSide(color: colors.surfaceBorder)),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: colors.surface,
               ),
             ),
           ),
@@ -72,8 +75,8 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                   u.email.toLowerCase().contains(_search.toLowerCase())).toList();
 
                 if (filtered.isEmpty) {
-                  return const Center(child: Text('No users found',
-                    style: TextStyle(color: Color(0xFF94A3B8))));
+                  return Center(child: Text('No users found',
+                    style: TextStyle(color: colors.textMuted)));
                 }
 
                 return ListView.separated(
@@ -85,9 +88,9 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colors.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        border: Border.all(color: colors.surfaceBorder),
                       ),
                       child: Row(
                         children: [
@@ -103,15 +106,15 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(user.name,
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary)),
                                 Text(user.email,
-                                  style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                                  style: TextStyle(fontSize: 11, color: colors.textMuted)),
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
                                     _buildRoleBadge(user.role),
                                     const SizedBox(width: 8),
-                                    _buildActiveBadge(user.isActive),
+                                    _buildActiveBadge(context, user.isActive),
                                   ],
                                 ),
                               ],
@@ -156,16 +159,18 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
     );
   }
 
-  Widget _buildActiveBadge(bool isActive) {
+  Widget _buildActiveBadge(BuildContext context, bool isActive) {
+    final colors = context.colors;
+    final color = isActive ? colors.success : colors.danger;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: (isActive ? Colors.green : Colors.red).withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(isActive ? 'ACTIVE' : 'INACTIVE',
         style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold,
-          color: isActive ? Colors.green : Colors.red)),
+          color: color)),
     );
   }
 }

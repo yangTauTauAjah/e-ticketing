@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:e_ticketing/core/theme/theme_provider.dart';
+import 'package:e_ticketing/core/theme/app_colors.dart';
 import 'package:e_ticketing/features/tickets/screens/dashboard_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_list_screen.dart';
 import 'package:e_ticketing/features/profile/screens/profile_screen.dart';
@@ -34,17 +35,24 @@ class MyApp extends ConsumerWidget {
       themeMode: themeMode,
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0F172A)),
+        scaffoldBackgroundColor: AppColors.light.background,
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.light.textPrimary),
+        extensions: const [AppColors.light],
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        scaffoldBackgroundColor: AppColors.dark.background,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: AppColors.dark.accent,
           brightness: Brightness.dark,
         ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: AppColors.dark.background,
+          foregroundColor: AppColors.dark.textPrimary,
+          surfaceTintColor: Colors.transparent,
+        ),
+        extensions: const [AppColors.dark],
       ),
       home: const SplashScreen(),
       routes: {
@@ -102,6 +110,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Scaffold(
       /* appBar: AppBar(
         toolbarHeight: 100.0,
@@ -129,12 +138,16 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       ), */
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFF1F5F9)))),
+        decoration: BoxDecoration(
+          color: colors.background,
+          border: Border(top: BorderSide(color: colors.surfaceBorder)),
+        ),
         child: BottomNavigationBar(
+          backgroundColor: colors.background,
           currentIndex: _selectedIndex,
           onTap: (index) => setState(() => _selectedIndex = index),
-          selectedItemColor: Colors.blue,
-          unselectedItemColor: const Color(0xFF94A3B8),
+          selectedItemColor: colors.accent,
+          unselectedItemColor: colors.textMuted,
           showUnselectedLabels: true,
           selectedLabelStyle: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold),
           unselectedLabelStyle: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold),
