@@ -12,6 +12,7 @@ import 'package:e_ticketing/features/tickets/screens/create_ticket_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_detail_screen.dart';
 import 'package:e_ticketing/features/tickets/screens/ticket_tracking_screen.dart';
 import 'package:e_ticketing/features/settings/screens/settings_screen.dart';
+import 'package:e_ticketing/features/settings/screens/security_privacy_screen.dart';
 import 'package:e_ticketing/features/admin/screens/user_management_screen.dart';
 import 'package:e_ticketing/features/notifications/screens/notifications_screen.dart';
 
@@ -75,6 +76,9 @@ class MyApp extends ConsumerWidget {
         }
         if (settings.name == '/settings') {
           return MaterialPageRoute(builder: (context) => const SettingsScreen());
+        }
+        if (settings.name == '/security-privacy') {
+          return MaterialPageRoute(builder: (context) => const SecurityPrivacyScreen());
         }
         if (settings.name == '/admin/users') {
           return MaterialPageRoute(builder: (context) => const UserManagementScreen());

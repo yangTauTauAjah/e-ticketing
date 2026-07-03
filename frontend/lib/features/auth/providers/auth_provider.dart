@@ -7,9 +7,18 @@ class AuthState {
   String? id;
   final String? role;
   final String? userName;
+  final String? email;
+  final DateTime? createdAt;
   final bool isAuthenticated;
 
-  AuthState({this.id, this.role, this.userName, this.isAuthenticated = false});
+  AuthState({
+    this.id,
+    this.role,
+    this.userName,
+    this.email,
+    this.createdAt,
+    this.isAuthenticated = false,
+  });
 }
 
 class AuthNotifier extends AsyncNotifier<AuthState> {
@@ -28,6 +37,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
           id: data['id'],
           role: data['role'],
           userName: data['name'],
+          email: data['email'],
+          createdAt: data['createdAt'] != null ? DateTime.parse(data['createdAt']) : null,
           isAuthenticated: true,
         );
       }
@@ -56,6 +67,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
           id: data['id'],
           role: data['role'], // 'user', 'helpdesk', or 'admin'
           userName: data['name'],
+          email: data['email'],
           isAuthenticated: true,
         );
       } else {

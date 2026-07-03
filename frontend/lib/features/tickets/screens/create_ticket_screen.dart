@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'; // Added for ref access
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
+import 'package:e_ticketing/core/network/api_error.dart';
 
 // Change to ConsumerStatefulWidget to access "ref"
 class CreateTicketScreen extends ConsumerStatefulWidget {
@@ -143,7 +144,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Error: $e"),
+            content: Text(extractErrorMessage(e, fallback: 'Failed to create ticket')),
             backgroundColor: Colors.red,
           ),
         );

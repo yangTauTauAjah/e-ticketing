@@ -6,6 +6,8 @@ import 'package:e_ticketing/core/network/dio_client.dart';
 import 'package:e_ticketing/features/admin/models/admin_user_model.dart';
 import 'package:e_ticketing/features/admin/providers/admin_user_provider.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
+import 'package:e_ticketing/features/auth/providers/auth_provider.dart';
+import 'package:e_ticketing/core/network/api_error.dart';
 
 const _roles = ['user', 'helpdesk', 'admin'];
 const _monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -29,7 +31,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
     String role = user.role;
     bool isActive = user.isActive;
     bool isSaving = false;
-    bool isSendingReset = false;
 
     await showModalBottomSheet(
       context: context,
@@ -56,34 +57,13 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                   const SnackBar(content: Text('User updated successfully')),
                 );
               }
-            } catch (_) {
+            } catch (e) {
               setSheetState(() => isSaving = false);
               if (ctx.mounted) {
                 ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text('Failed to update user')),
+                  SnackBar(content: Text(extractErrorMessage(e, fallback: 'Failed to update user'))),
                 );
               }
-            }
-          }
-
-          Future<void> sendResetLink() async {
-            setSheetState(() => isSendingReset = true);
-            try {
-              final dio = ref.read(dioProvider).instance;
-              await dio.post(ApiConstants.resetPassword, data: {'email': user.email});
-              if (ctx.mounted) {
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  SnackBar(content: Text('Password reset link sent to ${user.email}')),
-                );
-              }
-            } catch (_) {
-              if (ctx.mounted) {
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text('Failed to send reset link')),
-                );
-              }
-            } finally {
-              setSheetState(() => isSendingReset = false);
             }
           }
 
@@ -143,15 +123,6 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  OutlinedButton.icon(
-                    onPressed: isSendingReset ? null : sendResetLink,
-                    icon: isSendingReset
-                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(LucideIcons.mail, size: 16),
-                    label: const Text('Send Password Reset Link'),
-                  ),
-                  const SizedBox(height: 24),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -178,6 +149,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(adminUsersProvider);
+    final currentUserId = ref.watch(authProvider).value?.id;
     final colors = context.colors;
 
     return Scaffold(
@@ -222,49 +194,61 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final user = filtered[index];
-                    return InkWell(
-                      onTap: () => _showEditUserSheet(user),
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: colors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: colors.surfaceBorder),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 20,
-                              backgroundColor: _roleColor(user.role).withValues(alpha: 0.15),
-                              child: Text(user.name.substring(0, 1).toUpperCase(),
-                                style: TextStyle(color: _roleColor(user.role), fontWeight: FontWeight.bold)),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(user.name,
-                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                                  Text(user.email,
-                                    style: TextStyle(fontSize: 11, color: colors.textMuted)),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      _buildRoleBadge(user.role),
-                                      const SizedBox(width: 8),
-                                      _buildActiveBadge(context, user.isActive),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text('Joined ${_formatDate(user.createdAt)}',
-                                    style: TextStyle(fontSize: 10, color: colors.textDim)),
-                                ],
+                    final isSelf = user.id == currentUserId;
+                    return Opacity(
+                      opacity: isSelf ? 0.6 : 1,
+                      child: InkWell(
+                        onTap: isSelf ? null : () => _showEditUserSheet(user),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: colors.surfaceBorder),
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: _roleColor(user.role).withValues(alpha: 0.15),
+                                child: Text(user.name.substring(0, 1).toUpperCase(),
+                                  style: TextStyle(color: _roleColor(user.role), fontWeight: FontWeight.bold)),
                               ),
-                            ),
-                            Icon(LucideIcons.chevronRight, size: 18, color: colors.textDim),
-                          ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(user.name,
+                                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                                        if (isSelf) ...[
+                                          const SizedBox(width: 6),
+                                          Text('(You)', style: TextStyle(fontSize: 11, color: colors.textMuted)),
+                                        ],
+                                      ],
+                                    ),
+                                    Text(user.email,
+                                      style: TextStyle(fontSize: 11, color: colors.textMuted)),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        _buildRoleBadge(user.role),
+                                        const SizedBox(width: 8),
+                                        _buildActiveBadge(context, user.isActive),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text('Joined ${_formatDate(user.createdAt)}',
+                                      style: TextStyle(fontSize: 10, color: colors.textDim)),
+                                  ],
+                                ),
+                              ),
+                              Icon(isSelf ? LucideIcons.lock : LucideIcons.chevronRight, size: 18, color: colors.textDim),
+                            ],
+                          ),
                         ),
                       ),
                     );

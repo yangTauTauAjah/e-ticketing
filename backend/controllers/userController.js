@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const logger = require('../utils/logger');
+const { sendOtpEmail } = require('../utils/email');
 
 class UserController {
   static async getProfile(req, res, next) {
@@ -192,6 +193,69 @@ class UserController {
       });
     } catch (error) {
       logger.error('Admin update user error', error.message);
+      next(error);
+    }
+  }
+
+  static async requestPasswordResetOtp(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found',
+          error: { code: 'USER_NOT_FOUND' }
+        });
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      await User.setResetOtp(userId, otp);
+
+      try {
+        await sendOtpEmail(user.email, otp);
+      } catch (emailError) {
+        logger.error('Failed to send OTP email', emailError.message);
+      }
+
+      logger.info('Password reset OTP requested', { userId });
+
+      res.status(200).json({
+        success: true,
+        message: `A verification code has been sent to ${user.email}`
+      });
+    } catch (error) {
+      logger.error('Request password reset OTP error', error.message);
+      next(error);
+    }
+  }
+
+  static async confirmPasswordResetOtp(req, res, next) {
+    try {
+      const userId = req.user.sub;
+      const { otp, newPassword } = req.validatedBody;
+
+      const isValidOtp = await User.verifyResetOtp(userId, otp);
+      if (!isValidOtp) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired verification code',
+          error: { code: 'INVALID_OTP' }
+        });
+      }
+
+      await User.updatePassword(userId, newPassword);
+      await User.clearResetOtp(userId);
+
+      logger.info('Password reset via OTP', { userId });
+
+      res.status(200).json({
+        success: true,
+        message: 'Password reset successfully'
+      });
+    } catch (error) {
+      logger.error('Confirm password reset OTP error', error.message);
       next(error);
     }
   }

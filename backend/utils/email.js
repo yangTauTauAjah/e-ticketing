@@ -10,21 +10,18 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-async function sendPasswordResetEmail(toEmail, resetLink) {
+async function sendOtpEmail(toEmail, otp) {
   await transporter.sendMail({
     from: process.env.SMTP_FROM || 'noreply@e-ticketing.app',
     to: toEmail,
-    subject: 'E-Ticketing — Password Reset Request',
+    subject: 'E-Ticketing — Password Reset Verification Code',
     html: `
-      <h2>Password Reset</h2>
-      <p>You requested a password reset for your E-Ticketing account.</p>
-      <p>Use the link below to reset your password. The link is valid for 1 hour.</p>
-      <a href="${resetLink}" style="padding:12px 24px;background:#0F172A;color:white;text-decoration:none;border-radius:8px;">
-        Reset Password
-      </a>
+      <h2>Password Reset Verification Code</h2>
+      <p>Use the code below to reset your E-Ticketing password. This code is valid for 10 minutes.</p>
+      <p style="font-size:32px;font-weight:bold;letter-spacing:8px;">${otp}</p>
       <p>If you did not request this, ignore this email.</p>
     `
   });
 }
 
-module.exports = { sendPasswordResetEmail };
+module.exports = { sendOtpEmail };

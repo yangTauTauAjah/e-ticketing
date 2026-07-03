@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:e_ticketing/features/auth/screens/register_screen.dart';
 import 'package:e_ticketing/features/auth/screens/reset_password.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
+import 'package:e_ticketing/core/network/api_error.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -46,7 +47,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           }
         },        error: (error, stackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error.toString()), backgroundColor: Colors.red),
+            SnackBar(content: Text(extractErrorMessage(error, fallback: 'Invalid email or password')), backgroundColor: Colors.red),
           );
         },
         loading: () {},
@@ -60,7 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 60),
-            // Logo from Screenshot - Centered and Rotated
+            // Logo - Centered and Rotated
             Transform.rotate(
               angle: 0.15, // Slight rotation in radians (~8.6 degrees)
               child: Container(

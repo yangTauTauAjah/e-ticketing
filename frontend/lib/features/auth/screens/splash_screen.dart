@@ -18,15 +18,34 @@ class SplashScreen extends ConsumerWidget {
         }
       });
     });
+    final colors = context.colors;
 
     return Scaffold(
       backgroundColor: AppColors.dark.background,
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.confirmation_number_outlined, size: 72, color: Colors.white),
-            SizedBox(height: 24),
+            // Icon(Icons.confirmation_number_outlined, size: 72, color: Colors.white),
+            Transform.rotate(
+              angle: 0.15, // Slight rotation in radians (~8.6 degrees)
+              child: Container(
+                height: 100, width: 100,
+                decoration: BoxDecoration(
+                  color: colors.accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Center(child: Container(height: 40, width: 40, decoration: BoxDecoration(color: colors.accent, borderRadius: BorderRadius.circular(8)))),
+              ),
+            ),
+            SizedBox(height: 32),
             Text('E-TICKETING',
               style: TextStyle(
                 fontSize: 28,
@@ -42,7 +61,7 @@ class SplashScreen extends ConsumerWidget {
                 letterSpacing: 3,
                 fontWeight: FontWeight.bold,
               )),
-            SizedBox(height: 48),
+            SizedBox(height: 32),
             CircularProgressIndicator(color: Colors.white24, strokeWidth: 2),
           ],
         ),

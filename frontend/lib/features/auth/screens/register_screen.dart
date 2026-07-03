@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:e_ticketing/widgets/auth_text_field.dart';
 import 'package:e_ticketing/features/auth/providers/auth_provider.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
+import 'package:e_ticketing/core/network/api_error.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -54,7 +55,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         },
         error: (error, stackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error.toString()), backgroundColor: Colors.red),
+            SnackBar(content: Text(extractErrorMessage(error, fallback: 'Registration failed')), backgroundColor: Colors.red),
           );
         },
         loading: () {},

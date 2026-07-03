@@ -129,7 +129,11 @@ class ProfileScreen extends ConsumerWidget {
                   LucideIcons.settings, "System Configuration", "Adjust registry preferences",
                   onTap: () => Navigator.pushNamed(context, '/settings'),
                 ),
-                _buildProfileAction(context, LucideIcons.shield, "Security & Privacy", "Biometric & Session keys"),
+                _buildProfileAction(
+                  context,
+                  LucideIcons.shield, "Security & Privacy", "Account security & password reset",
+                  onTap: () => Navigator.pushNamed(context, '/security-privacy'),
+                ),
                 _buildProfileAction(
                   context,
                   LucideIcons.bell, "Notification Stream", "Push and email routing",

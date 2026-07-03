@@ -1,6 +1,18 @@
 const supabase = require('../config/database');
 const bcrypt = require('bcrypt');
 
+// `reset_otp_expires_at` is stored as TIMESTAMP (no time zone), so Postgres
+// hands back a naive "YYYY-MM-DDTHH:mm:ss" string with no offset. The value
+// is always written as a UTC instant (see setResetOtp), so it must be parsed
+// back as UTC too — otherwise `new Date(...)` reads it as local time and the
+// comparison against "now" is off by the runtime's UTC offset.
+function parseNaiveUtcTimestamp(value) {
+  if (!value) return null;
+  const normalized = value.replace(' ', 'T');
+  const hasTimezone = /[Zz]|[+-]\d{2}:?\d{2}$/.test(normalized);
+  return new Date(hasTimezone ? normalized : `${normalized}Z`);
+}
+
 class User {
   static async create(userData) {
     try {
@@ -117,6 +129,49 @@ class User {
       if (error) throw error;
 
       return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async setResetOtp(userId, otp) {
+    try {
+      const otpHash = await bcrypt.hash(otp, 10);
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+      const { error } = await supabase
+        .from('users')
+        .update({ reset_otp_hash: otpHash, reset_otp_expires_at: expiresAt })
+        .eq('id', userId);
+
+      if (error) throw error;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async verifyResetOtp(userId, otp) {
+    try {
+      const user = await this.findById(userId);
+      if (!user || !user.reset_otp_hash || !user.reset_otp_expires_at) return false;
+
+      const expiresAt = parseNaiveUtcTimestamp(user.reset_otp_expires_at);
+      if (!expiresAt || expiresAt < new Date()) return false;
+
+      return bcrypt.compare(otp, user.reset_otp_hash);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async clearResetOtp(userId) {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ reset_otp_hash: null, reset_otp_expires_at: null })
+        .eq('id', userId);
+
+      if (error) throw error;
     } catch (error) {
       throw error;
     }

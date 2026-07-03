@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const { generateToken } = require('../config/jwt');
 const logger = require('../utils/logger');
-const { sendPasswordResetEmail } = require('../utils/email');
+const { sendOtpEmail } = require('../utils/email');
 
 class AuthController {
   static async register(req, res, next) {
@@ -128,7 +128,7 @@ class AuthController {
     }
   }
 
-  static async resetPassword(req, res, next) {
+  static async requestPasswordReset(req, res, next) {
     try {
       const { email } = req.validatedBody;
 
@@ -138,25 +138,64 @@ class AuthController {
         // Don't reveal if email exists (security)
         return res.status(200).json({
           success: true,
-          message: 'If this email exists, a password reset link has been sent'
+          message: 'If this email exists, a verification code has been sent'
         });
       }
 
-      const resetLink = `${process.env.FRONTEND_URL}/reset-password?email=${encodeURIComponent(email)}`;
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      await User.setResetOtp(user.id, otp);
+
       try {
-        await sendPasswordResetEmail(email, resetLink);
+        await sendOtpEmail(email, otp);
       } catch (emailError) {
-        logger.error('Failed to send password reset email', emailError.message);
+        logger.error('Failed to send password reset OTP email', emailError.message);
       }
 
-      logger.info('Password reset requested', { email });
+      logger.info('Password reset OTP requested', { email });
 
       res.status(200).json({
         success: true,
-        message: 'If this email exists, a password reset link has been sent'
+        message: 'If this email exists, a verification code has been sent'
       });
     } catch (error) {
-      logger.error('Password reset error', error.message);
+      logger.error('Password reset request error', error.message);
+      next(error);
+    }
+  }
+
+  static async confirmPasswordReset(req, res, next) {
+    try {
+      const { email, otp, newPassword } = req.validatedBody;
+
+      const user = await User.findByEmail(email);
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired verification code',
+          error: { code: 'INVALID_OTP' }
+        });
+      }
+
+      const isValidOtp = await User.verifyResetOtp(user.id, otp);
+      if (!isValidOtp) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired verification code',
+          error: { code: 'INVALID_OTP' }
+        });
+      }
+
+      await User.updatePassword(user.id, newPassword);
+      await User.clearResetOtp(user.id);
+
+      logger.info('Password reset via OTP', { userId: user.id });
+
+      res.status(200).json({
+        success: true,
+        message: 'Password reset successfully'
+      });
+    } catch (error) {
+      logger.error('Password reset confirm error', error.message);
       next(error);
     }
   }
