@@ -8,6 +8,33 @@ import 'package:e_ticketing/core/theme/app_colors.dart';
 import 'package:e_ticketing/core/theme/status_colors.dart';
 import 'package:e_ticketing/features/notifications/providers/notification_provider.dart';
 
+class CardBackgroundPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      // A subtle white/blue tint to match the mock's abstract shapes
+      ..color = Colors.white.withValues(alpha: 0.04) 
+      ..style = PaintingStyle.fill;
+
+    // Center-left circle
+    canvas.drawCircle(
+      Offset(size.width * 0.1, size.height * 0.8), 
+      100, 
+      paint,
+    );
+
+    // Far-right circle
+    canvas.drawCircle(
+      Offset(size.width * 1.0, 50), 
+      70, 
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -98,37 +125,60 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(24),
+                  // IMPORTANT: Clips the CustomPaint circles to the border radius
+                  clipBehavior: Clip.antiAlias, 
                   decoration: BoxDecoration(
                     gradient: HeroCard.gradient,
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(color: HeroCard.border),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      const Text("TOTAL SUPPORT TICKETS",
-                        style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                      const SizedBox(height: 8),
-                      Text("${stats.total}",
-                        style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          _buildStatBadge("OPEN", stats.open, StatusColors.open),
-                          const SizedBox(width: 8),
-                          _buildStatBadge("IN PROGRESS", stats.inProgress, StatusColors.inProgress),
-                          const SizedBox(width: 8),
-                          _buildStatBadge("ON HOLD", stats.onHold, StatusColors.onHold),
-                        ],
+                      // Abstract Background Shapes
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: CardBackgroundPainter(),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _buildStatBadge("CLOSED", stats.closed, StatusColors.closed),
-                          const SizedBox(width: 8),
-                          _buildStatBadge("REOPENED", stats.reopened, StatusColors.reopened),
-                        ],
+                      
+                      // Card Content
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("TOTAL SUPPORT TICKETS",
+                              style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                            const SizedBox(height: 8),
+                            Text("${stats.total}",
+                              style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 24),
+                            
+                            // Replaced badge grid with the mock's success state layout
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2563EB).withValues(alpha: 0.25), // Transparent Blue
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(LucideIcons.checkCircle2, color: Color(0xFF60A5FA), size: 14),
+                                      const SizedBox(width: 6),
+                                      Text("${stats.closed} Resolved",
+                                        style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 12, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                const Text("OVERALL SUCCESS STATE",
+                                  style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -138,6 +188,7 @@ class DashboardScreen extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, _) => Text("Error loading stats: $err"),
           ),
+
 
           const SizedBox(height: 32),
 

@@ -9,6 +9,7 @@ import 'package:e_ticketing/core/constants/api_constants.dart';
 import 'package:e_ticketing/features/tickets/providers/ticket_provider.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
 import 'package:e_ticketing/core/theme/status_colors.dart';
+import 'package:e_ticketing/features/tickets/screens/dashboard_screen.dart';
 
 final ticketDetailProvider = FutureProvider.family<Ticket, String>((ref, id) async {
   final dio = ref.read(dioProvider).instance;
@@ -91,54 +92,69 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
             children: [
               // Dark transaction card
               Container(
-                padding: const EdgeInsets.all(24),
+                width: double.infinity,
+                clipBehavior: Clip.antiAlias, // Ensures the background circles do not bleed past the rounded corners
                 decoration: BoxDecoration(
                   gradient: HeroCard.gradient,
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(color: HeroCard.border),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Stack(
                   children: [
-                    Text('TRANSACTION REGISTRY',
-                      style: TextStyle(color: colors.accent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                    Text('Case ID #${ticket.id.substring(0, 8).toUpperCase()}',
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    const Text('SUBJECT HEADER',
-                      style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
-                    Text(ticket.title,
-                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 24),
-                    const Divider(color: Colors.white10),
-                    const SizedBox(height: 24),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 24,
-                      crossAxisSpacing: 0,
-                      childAspectRatio: 4.0,
-                      children: [
-                        _buildInfoTile('REPORTER', ticket.createdByName),
-                        _buildInfoTile('ASSIGNED TO', ticket.assignedToName ?? 'Unassigned'),
-                        _buildInfoTile('STATUS', ticket.status.name.toUpperCase().replaceAll('_', ' '),
-                          dotColor: StatusColors.forStatus(ticket.status)),
-                        _buildInfoTile('CREATED AT', ticket.createdAt.toString().split(' ')[0]),
-                      ],
+                    // Abstract Background Shapes
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: CardBackgroundPainter(),
+                      ),
                     ),
-                    const SizedBox(height: 24),
-                    const Divider(color: Colors.white10),
-                    const SizedBox(height: 24),
-                    const Text('DESCRIPTION',
-                      style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                    const SizedBox(height: 8),
-                    Text(ticket.description,
-                      style: const TextStyle(color: Colors.white, fontSize: 12, letterSpacing: 0.5, height: 1.6)),
+                    
+                    // Card Content
+                    Padding(
+                      padding: const EdgeInsets.all(24), // Moved padding here from the parent Container
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('TRANSACTION REGISTRY',
+                            style: TextStyle(color: colors.accent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                          Text('Case ID #${ticket.id.substring(0, 8).toUpperCase()}',
+                            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          const Text('SUBJECT HEADER',
+                            style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                          Text(ticket.title,
+                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 24),
+                          const Divider(color: Colors.white10),
+                          const SizedBox(height: 24),
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            mainAxisSpacing: 24,
+                            crossAxisSpacing: 0,
+                            childAspectRatio: 4.0,
+                            children: [
+                              _buildInfoTile('REPORTER', ticket.createdByName),
+                              _buildInfoTile('ASSIGNED TO', ticket.assignedToName ?? 'Unassigned'),
+                              _buildInfoTile('STATUS', ticket.status.name.toUpperCase().replaceAll('_', ' '),
+                                dotColor: StatusColors.forStatus(ticket.status)),
+                              _buildInfoTile('CREATED AT', ticket.createdAt.toString().split(' ')[0]),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          const Divider(color: Colors.white10),
+                          const SizedBox(height: 24),
+                          const Text('DESCRIPTION',
+                            style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                          const SizedBox(height: 8),
+                          Text(ticket.description,
+                            style: const TextStyle(color: Colors.white, fontSize: 12, letterSpacing: 0.5, height: 1.6)),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-
               // Edit panel — helpdesk and admin only
               if (canEdit) ...[
                 const SizedBox(height: 24),
