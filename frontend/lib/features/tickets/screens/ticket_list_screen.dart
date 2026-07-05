@@ -35,8 +35,9 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> {
       final dio = ref.read(dioProvider).instance;
       await dio.patch('${ApiConstants.tickets}/$ticketId',
           data: {'assignedToId': helpdeskId});
-      ref.invalidate(ticketsProvider);
+      // ref.invalidate(ticketsProvider);
       ref.invalidate(filteredTicketsProvider);
+      ref.invalidate(ticketStatsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Assignment updated')),

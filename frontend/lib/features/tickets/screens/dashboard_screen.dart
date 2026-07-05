@@ -41,7 +41,7 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider).value;
-    final ticketsAsync = ref.watch(ticketsProvider);
+    final ticketsAsync = ref.watch(filteredTicketsProvider(const {'limit': '10'}));
     final unreadCountAsync = ref.watch(unreadNotificationCountProvider);
     final colors = context.colors;
 

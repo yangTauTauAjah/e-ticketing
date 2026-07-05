@@ -8,6 +8,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
 import 'package:e_ticketing/core/network/api_error.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'dart:typed_data'; // For Uint8List
+import 'package:e_ticketing/features/tickets/providers/ticket_provider.dart';
 
 // Change to ConsumerStatefulWidget to access "ref"
 class CreateTicketScreen extends ConsumerStatefulWidget {
@@ -24,7 +27,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
 
   String selectedCategory = 'technical'; // Match backend enum
   String selectedPriority = 'medium';
-  File? _selectedImage;
+  // File? _selectedImage;
+  List<XFile> _selectedImages = [];
+  List<Uint8List> _imageBytesList = []; // Add a list to hold bytes for uploading
   bool _isLoading = false;
 
   // Validation error messages
@@ -82,14 +87,47 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     return isValid;
   }
 
-  // Method to pick image
-  Future<void> _pickImage(ImageSource source) async {
+  /* Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
     if (pickedFile != null) {
-      setState(() => _selectedImage = File(pickedFile.path));
+      // setState(() => _selectedImage = File(pickedFile.path));
+      final bytes = await pickedFile.readAsBytes();
+      setState(() {
+        _selectedImage = pickedFile;
+        _imageBytes = bytes;
+      });
+    }
+  } */
+
+  // Method to pick image
+  Future<void> _pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    
+    if (source == ImageSource.gallery) {
+      final pickedFiles = await picker.pickMultiImage();
+      if (pickedFiles.isNotEmpty) {
+        setState(() {
+          _selectedImages.addAll(pickedFiles);
+        });
+      }
+    } else {
+      final pickedFile = await picker.pickImage(source: source);
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImages.add(pickedFile);
+        });
+      }
     }
   }
+
+  // Helper to remove an image from the list if the user changes their mind
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
   Future<void> _submitTicket() async {
     setState(() {
       _validateInputs();
@@ -110,25 +148,60 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     final dio = ref.read(dioProvider).instance;
 
     try {
-      List<String> attachmentIds = [];
+      // List<String> attachmentIds = [];
 
       // 1. Upload file if selected
-      if (_selectedImage != null) {
+      // mobile
+      /* if (_selectedImage != null) {
         FormData formData = FormData.fromMap({
           "file": await MultipartFile.fromFile(_selectedImage!.path, filename: "evidence.jpg"),
         });
         final uploadRes = await dio.post("${ApiConstants.baseUrl}/upload", data: formData);
         attachmentIds.add(uploadRes.data['data']['id']);
-      }
+      } */
 
-      // 2. Create ticket using defined controllers
-      await dio.post(ApiConstants.tickets, data: {
+      // web
+      /* if (_selectedImage != null && _imageBytes != null) {
+        FormData formData = FormData.fromMap({
+          "file": MultipartFile.fromBytes(
+            _imageBytes!, 
+            filename: _selectedImage!.name.isNotEmpty ? _selectedImage!.name : "evidence.jpg",
+          ),
+        });
+        
+        final uploadRes = await dio.post("${ApiConstants.baseUrl}/upload", data: formData);
+        attachmentIds.add(uploadRes.data['data']['id']);
+      } */
+
+      // 1. Create ticket using defined controllers
+      Response response = await dio.post(ApiConstants.tickets, data: {
         "title": _titleController.text,
         "description": _descController.text,
         "category": selectedCategory,
         "priority": selectedPriority,
-        "attachments": attachmentIds
+        // "attachments": attachmentIds
       });
+
+      String ticketId = response.data['data']['id'];
+
+      // 2. Upload ALL selected files
+      if (_selectedImages.isNotEmpty) {
+        for (var image in _selectedImages) {
+          final bytes = await image.readAsBytes(); 
+          
+          FormData formData = FormData.fromMap({
+            "ticket_id": ticketId,
+            "file": MultipartFile.fromBytes(
+              bytes, 
+              filename: image.name.isNotEmpty ? image.name : "evidence.jpg"
+            ),
+          });
+          
+          // final uploadRes = 
+          await dio.post("${ApiConstants.baseUrl}/upload", data: formData);
+          // attachmentIds.add(uploadRes.data['data']['id']);
+        }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -137,6 +210,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             backgroundColor: Colors.green,
           ),
         );
+        // ref.invalidate(ticketsProvider);
+        ref.invalidate(filteredTicketsProvider);
+        ref.invalidate(ticketStatsProvider);
         Navigator.pop(context);
       }
     } catch (e) {
@@ -186,17 +262,78 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             const SizedBox(height: 24),
 
             _buildLabel(context, "Evidence Log"),
-            if (_selectedImage != null)
+            /* if (_selectedImage != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.file(
-                    _selectedImage!,
-                    height: 120,
-                    width: 120,
-                    fit: BoxFit.cover
-                  ),
+                  child: kIsWeb 
+                  ? Image.network(
+                      _selectedImage!.path,
+                      height: 120,
+                      width: 120,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.file(
+                      File(_selectedImage!.path), // It is safe to use File here if kIsWeb is false
+                      height: 120,
+                      width: 120,
+                      fit: BoxFit.cover,
+                    ),
+                ),
+              ), */
+            
+            // Display multiple images horizontally
+            if (_selectedImages.isNotEmpty)
+              Container(
+                height: 130, // Slightly taller to accommodate the delete button
+                margin: const EdgeInsets.only(bottom: 16),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _selectedImages.length,
+                  itemBuilder: (context, index) {
+                    final image = _selectedImages[index];
+                    return Stack(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(right: 12, top: 8),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: kIsWeb 
+                              ? Image.network(
+                                  image.path,
+                                  height: 120,
+                                  width: 120,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  File(image.path), 
+                                  height: 120,
+                                  width: 120,
+                                  fit: BoxFit.cover,
+                                ),
+                          ),
+                        ),
+                        // Small Delete Badge
+                        Positioned(
+                          top: 0,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(index),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: context.colors.danger,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(LucideIcons.x, size: 14, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             Row(

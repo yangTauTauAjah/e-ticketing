@@ -11,6 +11,7 @@ class Ticket {
             description: ticketData.description,
             category: ticketData.category,
             priority: ticketData.priority || 'medium',
+            assigned_to_id: ticketData.assignedToId || null,
             status: 'open',
             created_by_id: ticketData.createdById
           }

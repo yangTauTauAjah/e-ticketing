@@ -25,6 +25,7 @@ class Ticket {
   final int commentCount;
   final List<Comment> comments;
   final List<TicketHistoryEvent> history;
+  final List<String> attachments; // 1. Property added here
 
   Ticket({
     required this.id,
@@ -42,7 +43,9 @@ class Ticket {
     this.commentCount = 0,
     this.comments = const [],
     this.history = const [],
+    this.attachments = const [], // 2. Initialized in constructor
   });
+
   // Helper to convert snake_case to camelCase enum names
   static String snakeToCamelCase(String input) {
     // e.g., "in_progress" -> "inProgress"
@@ -69,6 +72,17 @@ class Ticket {
         historyList = (json['history'] as List)
             .map((h) => TicketHistoryEvent.fromJson(h))
             .toList();
+      }
+
+      // 3. Parse attachments robustly
+      var attachmentList = <String>[];
+      if (json['attachments'] != null) {
+        attachmentList = (json['attachments'] as List).map((a) {
+          // If backend sends an object like { id: '...', url: '...' }
+          if (a is Map) return a['file_url']?.toString() ?? '';
+          // If backend sends a simple list of strings
+          return a.toString();
+        }).where((url) => url.isNotEmpty).toList();
       }
 
       // Convert snake_case from backend to camelCase for Dart enums
@@ -101,6 +115,7 @@ class Ticket {
         commentCount: (json['commentCount'] ?? json['comment_count'] ?? 0) as int,
         comments: commentList,
         history: historyList,
+        attachments: attachmentList, // 4. Mapped to constructor
       );
     } catch (e) {
       print("Error parsing Ticket JSON: $e");

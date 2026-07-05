@@ -9,8 +9,9 @@ const Notification = require('../models/Notification');
 class TicketController {
   static async create(req, res, next) {
     try {
-      const { title, description, category, priority, attachments } = req.validatedBody;
+      const { title, description, category, priority } = req.validatedBody;
       const userId = req.user.sub;
+      const userRole = req.user.role;
 
       // Create ticket
       const ticket = await Ticket.create({
@@ -18,19 +19,27 @@ class TicketController {
         description,
         category,
         priority: priority || 'medium',
+        assignedToId: userRole === 'helpdesk' ? userId : null,
         createdById: userId
       });
 
-      try {
+      await TicketHistory.create({
+        ticketId: ticket.id,
+        changedById: userId,
+        fieldName: 'status',
+        oldValue: null,
+        newValue: 'open'
+      });
+
+      if (userRole === 'helpdesk') {
+        const userName = (await User.findById(userId)).name;
         await TicketHistory.create({
           ticketId: ticket.id,
           changedById: userId,
-          fieldName: 'status',
+          fieldName: 'assignedToId',
           oldValue: null,
-          newValue: 'open'
+          newValue: userName
         });
-      } catch (historyError) {
-        logger.error('Failed to write ticket history', historyError.message);
       }
 
       logger.info('Ticket created', { ticketId: ticket.id, userId });

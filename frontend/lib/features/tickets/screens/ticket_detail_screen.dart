@@ -41,13 +41,61 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
     super.dispose();
   }
 
+  void _showImagePreview(BuildContext context, String url) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // InteractiveViewer allows pinch-to-zoom and panning
+            InteractiveViewer(
+              panEnabled: true,
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Icon(LucideIcons.imageOff, color: Colors.white, size: 48),
+                  ),
+                ),
+              ),
+            ),
+            
+            // Close Button
+            Positioned(
+              top: 16,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(LucideIcons.x, color: Colors.white, size: 24),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _patchTicket(Map<String, dynamic> data, String fieldName) async {
     setState(() => _loadingField = fieldName);
     try {
       final dio = ref.read(dioProvider).instance;
       await dio.patch('${ApiConstants.tickets}/${widget.ticketId}', data: data);
+      // ref.invalidate(ticketsProvider);
       ref.invalidate(ticketDetailProvider(widget.ticketId));
-      ref.invalidate(ticketsProvider);
       ref.invalidate(filteredTicketsProvider);
       ref.invalidate(ticketStatsProvider);
     } catch (_) {
@@ -93,7 +141,7 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
               // Dark transaction card
               Container(
                 width: double.infinity,
-                clipBehavior: Clip.antiAlias, // Ensures the background circles do not bleed past the rounded corners
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   gradient: HeroCard.gradient,
                   borderRadius: BorderRadius.circular(32),
@@ -101,16 +149,13 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
                 ),
                 child: Stack(
                   children: [
-                    // Abstract Background Shapes
                     Positioned.fill(
                       child: CustomPaint(
                         painter: CardBackgroundPainter(),
                       ),
                     ),
-                    
-                    // Card Content
                     Padding(
-                      padding: const EdgeInsets.all(24), // Moved padding here from the parent Container
+                      padding: const EdgeInsets.all(24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -149,12 +194,50 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
                           const SizedBox(height: 8),
                           Text(ticket.description,
                             style: const TextStyle(color: Colors.white, fontSize: 12, letterSpacing: 0.5, height: 1.6)),
+                          
+                          // Image Attachments Section
+                          if (ticket.attachments.isNotEmpty) ...[
+                            const SizedBox(height: 24),
+                            const Text('EVIDENCE LOG',
+                              style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 80,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: ticket.attachments.length,
+                                itemBuilder: (context, index) {
+                                  final url = ticket.attachments[index].toString(); 
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 12),
+                                    child: GestureDetector(
+                                      onTap: () => _showImagePreview(context, url), // Trigger full screen
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.network(
+                                          url,
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) => Container(
+                                            width: 80, height: 80, color: Colors.white10,
+                                            child: const Icon(LucideIcons.imageOff, color: Colors.white54),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
+
               // Edit panel — helpdesk and admin only
               if (canEdit) ...[
                 const SizedBox(height: 24),
@@ -169,7 +252,7 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
               ),
               const SizedBox(height: 24),
               ..._buildTimeline(context, ticket, authState?.id).map((item) => item.widget),
-              const SizedBox(height: 70),
+              const SizedBox(height: 100),
             ],
           ),
         ),
@@ -182,6 +265,16 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
 
   Widget _buildEditPanel(BuildContext context, Ticket ticket, String role) {
     final colors = context.colors;
+    final isClosed = ticket.status.name == 'closed';
+    
+    // Filter statuses so Flutter doesn't crash, but disable selection for closed/reopened
+    final availableStatuses = TicketStatus.values.where((s) {
+      if (s.name == 'closed' || s.name == 'reopened') {
+        return s == ticket.status; 
+      }
+      return true;
+    }).toList();
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -198,29 +291,43 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
           Text('MANAGE TICKET',
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 2)),
           const SizedBox(height: 16),
-          _buildFieldDropdown<TicketStatus>(
+          if (ticket.status != TicketStatus.closed && ticket.status != TicketStatus.reopened) _buildFieldDropdown<TicketStatus>(
             context,
             label: 'STATUS',
             fieldKey: 'status',
             value: ticket.status,
-            items: TicketStatus.values.map((s) => DropdownMenuItem(
+            items: availableStatuses.map((s) => DropdownMenuItem(
               value: s,
+              enabled: s.name != 'closed' && s.name != 'reopened', // Disable selection from dropdown
               child: Text(s.name.toUpperCase().replaceAll('_', ' ')),
             )).toList(),
             onChanged: (val) => _patchTicket({'status': val!.name}, 'status'),
-          ),
-          const SizedBox(height: 12),
-          _buildFieldDropdown<TicketPriority>(
-            context,
-            label: 'PRIORITY',
-            fieldKey: 'priority',
-            value: ticket.priority,
-            items: TicketPriority.values.map((p) => DropdownMenuItem(
-              value: p,
-              child: Text(p.name.toUpperCase()),
-            )).toList(),
-            onChanged: (val) => _patchTicket({'priority': val!.name}, 'priority'),
-          ),
+          ) else if (ticket.status == TicketStatus.reopened) 
+            _buildFieldDropdown<TicketStatus>(
+              context,
+              label: 'STATUS',
+              fieldKey: 'status',
+              value: ticket.status,
+              items: [DropdownMenuItem(
+                value: TicketStatus.reopened,
+                child: Text(TicketStatus.reopened.name.toUpperCase().replaceAll('_', ' ')),
+              ),],
+            onChanged: (val) => {},
+            ),
+          if (ticket.status != TicketStatus.closed) ...[
+            const SizedBox(height: 12),
+            _buildFieldDropdown<TicketPriority>(
+              context,
+              label: 'PRIORITY',
+              fieldKey: 'priority',
+              value: ticket.priority,
+              items: TicketPriority.values.map((p) => DropdownMenuItem(
+                value: p,
+                child: Text(p.name.toUpperCase()),
+              )).toList(),
+              onChanged: (val) => _patchTicket({'priority': val!.name}, 'priority'),
+            )
+          ],
           const SizedBox(height: 12),
           _buildFieldDropdown<TicketCategory>(
             context,
@@ -239,15 +346,40 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
               _patchTicket({'category': apiVal}, 'category');
             },
           ),
-          if (role == 'admin') ...[
+          if (ticket.status != TicketStatus.closed && role == 'admin') ...[
             const SizedBox(height: 12),
             _buildAssignDropdown(context, ticket),
           ],
+          
+          // Toggle Button for Close/Reopen
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _loadingField == 'status' ? null : () {
+                _patchTicket({'status': isClosed ? 'reopened' : 'closed'}, 'status');
+              },
+              icon: _loadingField == 'status' 
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : Icon(isClosed ? LucideIcons.unlock : LucideIcons.lock, size: 18),
+              label: Text(
+                isClosed ? 'REOPEN TICKET' : 'CLOSE TICKET',
+                style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isClosed ? colors.warning : colors.danger,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
-
+  
   Widget _buildFieldDropdown<T>(
     BuildContext context, {
     required String label,

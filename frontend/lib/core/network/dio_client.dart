@@ -1,19 +1,19 @@
 import 'package:dio/dio.dart';
+import 'package:e_ticketing/features/auth/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-final dioProvider = Provider((ref) => DioClient());
+final dioProvider = Provider((ref) => DioClient(ref));
 
 class DioClient {
   final Dio _dio = Dio();
-  final _storage = const FlutterSecureStorage();
 
-  DioClient() {
+  DioClient(Ref ref) {
     _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _storage.read(key: 'jwt_token');
+      onRequest: (options, handler) {
+        final token = ref.read(authProvider).value?.token;
+        
         if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token'; //
+          options.headers['Authorization'] = 'Bearer $token';
         }
         return handler.next(options);
       },

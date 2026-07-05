@@ -54,6 +54,8 @@ class TicketHistoryEvent {
       case 'assignedToId':
         if (newValue == null) {
           return '$changedByName unassigned this ticket';
+        } else if (changedByName == newValue) {
+          return '$changedByName is assigned to this ticket';
         }
         return '$changedByName assigned this ticket to $newValue';
       default:

@@ -20,6 +20,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
     }
 
     const userId = req.user.sub;
+    const ticketId = req.body.ticket_id;
     const fileInfo = getFileInfo(req.file);
 
     // Upload to Supabase Storage
@@ -51,6 +52,7 @@ router.post('/', upload.single('file'), async (req, res, next) => {
 
     // Create attachment record
     const attachment = await Attachment.create({
+      ticketId: ticketId || null,
       fileName: fileInfo.originalName,
       fileType: fileInfo.fileType,
       fileSize: fileInfo.fileSize,
