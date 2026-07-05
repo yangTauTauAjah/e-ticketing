@@ -253,7 +253,7 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   // Helper Widget for Stat Badges
-  Widget _buildStatBadge(String label, int count, Color color) {
+  /* Widget _buildStatBadge(String label, int count, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -269,7 +269,7 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
+  } */
 
   // Real data-driven Ticket Item
   Widget _buildTicketItem(BuildContext context, Ticket ticket) {

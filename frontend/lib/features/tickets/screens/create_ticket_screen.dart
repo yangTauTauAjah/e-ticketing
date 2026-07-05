@@ -3,13 +3,12 @@ import 'package:dio/dio.dart';
 import 'package:e_ticketing/core/constants/api_constants.dart';
 import 'package:e_ticketing/core/network/dio_client.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Added for ref access
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:e_ticketing/core/theme/app_colors.dart';
 import 'package:e_ticketing/core/network/api_error.dart';
-import 'package:flutter/foundation.dart'; // For kIsWeb
-import 'dart:typed_data'; // For Uint8List
+import 'package:flutter/foundation.dart';
 import 'package:e_ticketing/features/tickets/providers/ticket_provider.dart';
 
 // Change to ConsumerStatefulWidget to access "ref"
@@ -25,11 +24,11 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
 
-  String selectedCategory = 'technical'; // Match backend enum
+  String selectedCategory = 'technical';
   String selectedPriority = 'medium';
   // File? _selectedImage;
-  List<XFile> _selectedImages = [];
-  List<Uint8List> _imageBytesList = []; // Add a list to hold bytes for uploading
+  final List<XFile> _selectedImages = [];
+  // List<Uint8List> _imageBytesList = [];
   bool _isLoading = false;
 
   // Validation error messages
