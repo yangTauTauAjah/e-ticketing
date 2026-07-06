@@ -181,8 +181,16 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
                             children: [
                               _buildInfoTile('REPORTER', ticket.createdByName),
                               _buildInfoTile('ASSIGNED TO', ticket.assignedToName ?? 'Unassigned'),
-                              _buildInfoTile('STATUS', ticket.status.name.toUpperCase().replaceAll('_', ' '),
-                                dotColor: StatusColors.forStatus(ticket.status)),
+                              
+                              // UPDATED: Dynamically display "ASSIGNED"
+                              _buildInfoTile(
+                                'STATUS', 
+                                (ticket.assignedToId != null && ticket.status == TicketStatus.open) 
+                                    ? 'ASSIGNED' 
+                                    : ticket.status.name.toUpperCase().replaceAll('_', ' '),
+                                dotColor: StatusColors.forStatus(ticket.status),
+                              ),
+                              
                               _buildInfoTile('CREATED AT', ticket.createdAt.toString().split(' ')[0]),
                             ],
                           ),
@@ -267,13 +275,26 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
     final colors = context.colors;
     final isClosed = ticket.status.name == 'closed';
     
-    // Filter statuses so Flutter doesn't crash, but disable selection for closed/reopened
-    final availableStatuses = TicketStatus.values.where((s) {
-      if (s.name == 'closed' || s.name == 'reopened') {
-        return s == ticket.status; 
-      }
-      return true;
-    }).toList();
+    // Determine dynamic states
+    final isAssignedNotStarted = ticket.assignedToId != null && 
+        (ticket.status.name == 'open' || ticket.status.name == 'reopened');
+    
+    final canStartWork = role == 'helpdesk' && isAssignedNotStarted;
+
+    // Determine the Close/Cancel button UI contextually
+    String closeActionLabel;
+    IconData closeActionIcon;
+    
+    if (isClosed) {
+      closeActionLabel = 'REOPEN TICKET';
+      closeActionIcon = LucideIcons.unlock;
+    } else if (role == 'helpdesk' && isAssignedNotStarted) {
+      closeActionLabel = 'CANCEL TICKET';
+      closeActionIcon = LucideIcons.xCircle;
+    } else {
+      closeActionLabel = 'CLOSE TICKET';
+      closeActionIcon = LucideIcons.lock;
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -291,31 +312,9 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
           Text('MANAGE TICKET',
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.textMuted, letterSpacing: 2)),
           const SizedBox(height: 16),
-          if (ticket.status != TicketStatus.closed && ticket.status != TicketStatus.reopened) _buildFieldDropdown<TicketStatus>(
-            context,
-            label: 'STATUS',
-            fieldKey: 'status',
-            value: ticket.status,
-            items: availableStatuses.map((s) => DropdownMenuItem(
-              value: s,
-              enabled: s.name != 'closed' && s.name != 'reopened', // Disable selection from dropdown
-              child: Text(s.name.toUpperCase().replaceAll('_', ' ')),
-            )).toList(),
-            onChanged: (val) => _patchTicket({'status': val!.name}, 'status'),
-          ) else if (ticket.status == TicketStatus.reopened) 
-            _buildFieldDropdown<TicketStatus>(
-              context,
-              label: 'STATUS',
-              fieldKey: 'status',
-              value: ticket.status,
-              items: [DropdownMenuItem(
-                value: TicketStatus.reopened,
-                child: Text(TicketStatus.reopened.name.toUpperCase().replaceAll('_', ' ')),
-              ),],
-            onChanged: (val) => {},
-            ),
-          if (ticket.status != TicketStatus.closed) ...[
-            const SizedBox(height: 12),
+          
+          // Only show editing dropdowns if the ticket is NOT closed
+          if (!isClosed) ...[
             _buildFieldDropdown<TicketPriority>(
               context,
               label: 'PRIORITY',
@@ -326,33 +325,57 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
                 child: Text(p.name.toUpperCase()),
               )).toList(),
               onChanged: (val) => _patchTicket({'priority': val!.name}, 'priority'),
-            )
-          ],
-          const SizedBox(height: 12),
-          _buildFieldDropdown<TicketCategory>(
-            context,
-            label: 'CATEGORY',
-            fieldKey: 'category',
-            value: ticket.category,
-            items: TicketCategory.values.map((c) => DropdownMenuItem(
-              value: c,
-              child: Text(
-                c.name.replaceAllMapped(RegExp(r'([A-Z])'), (m) => ' ${m.group(0)}').toUpperCase(),
-              ),
-            )).toList(),
-            onChanged: (val) {
-              final apiVal = val!.name.replaceAllMapped(
-                RegExp(r'([A-Z])'), (m) => '_${m.group(0)!.toLowerCase()}');
-              _patchTicket({'category': apiVal}, 'category');
-            },
-          ),
-          if (ticket.status != TicketStatus.closed && role == 'admin') ...[
+            ),
             const SizedBox(height: 12),
-            _buildAssignDropdown(context, ticket),
+            _buildFieldDropdown<TicketCategory>(
+              context,
+              label: 'CATEGORY',
+              fieldKey: 'category',
+              value: ticket.category,
+              items: TicketCategory.values.map((c) => DropdownMenuItem(
+                value: c,
+                child: Text(
+                  c.name.replaceAllMapped(RegExp(r'([A-Z])'), (m) => ' ${m.group(0)}').toUpperCase(),
+                ),
+              )).toList(),
+              onChanged: (val) {
+                final apiVal = val!.name.replaceAllMapped(
+                  RegExp(r'([A-Z])'), (m) => '_${m.group(0)!.toLowerCase()}');
+                _patchTicket({'category': apiVal}, 'category');
+              },
+            ),
+            if (role == 'admin') ...[
+              const SizedBox(height: 12),
+              _buildAssignDropdown(context, ticket),
+            ],
+            const SizedBox(height: 24),
           ],
-          
-          // Toggle Button for Close/Reopen
-          const SizedBox(height: 24),
+
+          // Action Button: START WORK (Helpdesk Only)
+          if (canStartWork && !isClosed) ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _loadingField == 'status' ? null : () {
+                  _patchTicket({'status': 'in_progress'}, 'status');
+                },
+                icon: _loadingField == 'status' 
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Icon(LucideIcons.play, size: 18),
+                label: const Text('START WORK', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // Action Button: DYNAMIC CLOSE / CANCEL / REOPEN
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -361,9 +384,9 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
               },
               icon: _loadingField == 'status' 
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : Icon(isClosed ? LucideIcons.unlock : LucideIcons.lock, size: 18),
+                  : Icon(closeActionIcon, size: 18),
               label: Text(
-                isClosed ? 'REOPEN TICKET' : 'CLOSE TICKET',
+                closeActionLabel,
                 style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
               ),
               style: ElevatedButton.styleFrom(

@@ -8,8 +8,8 @@ class StatusColors {
   const StatusColors._();
 
   static const open = Color(0xFF4ADE80);
-  static const inProgress = Color(0xFFFB923C);
-  static const onHold = Color(0xFFFACC15);
+  static const assigned = Color(0xFFFB923C);
+  static const inProgress = Color(0xFFFACC15);
   static const closed = Color(0xFF6B7280);
   static const reopened = Color(0xFFF87171);
 
@@ -22,10 +22,10 @@ class StatusColors {
     switch (status) {
       case TicketStatus.open:
         return open;
+      case TicketStatus.assigned:
+        return assigned;
       case TicketStatus.in_progress:
         return inProgress;
-      case TicketStatus.on_hold:
-        return onHold;
       case TicketStatus.closed:
         return closed;
       case TicketStatus.reopened:
@@ -37,10 +37,10 @@ class StatusColors {
     switch (name) {
       case 'open':
         return open;
+      case 'assigned':
+        return assigned;
       case 'in_progress':
         return inProgress;
-      case 'on_hold':
-        return onHold;
       case 'closed':
         return closed;
       case 'reopened':

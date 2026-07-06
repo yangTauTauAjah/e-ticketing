@@ -14,8 +14,8 @@ class TicketTrackingScreen extends ConsumerWidget {
     if (event.fieldName == 'status') {
       switch (event.newValue) {
         case 'open': return LucideIcons.circleDot;
+        case 'assigned': return LucideIcons.userCheck;
         case 'in_progress': return LucideIcons.loader;
-        case 'on_hold': return LucideIcons.pauseCircle;
         case 'closed': return LucideIcons.checkCircle2;
         case 'reopened': return LucideIcons.refreshCw;
         default: return LucideIcons.circle;

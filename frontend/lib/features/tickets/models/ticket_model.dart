@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 // Mapping your DB enums to Dart
 // ignore: constant_identifier_names
-enum TicketStatus { open, in_progress, on_hold, closed, reopened }
+enum TicketStatus { open, assigned, in_progress, closed, reopened }
 enum TicketPriority { low, medium, high, critical }
 enum TicketCategory { billing, technical, account, general, featureRequest }
 

@@ -139,7 +139,7 @@ class Ticket {
 
   static async stats(filters = {}) {
     try {
-      const statuses = ['open', 'in_progress', 'on_hold', 'closed', 'reopened'];
+      const statuses = ['open', 'assigned', 'in_progress', 'closed', 'reopened'];
       const counts = {};
 
       for (const status of statuses) {

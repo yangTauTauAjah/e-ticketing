@@ -13,7 +13,7 @@ A production-ready Node.js + Express + Supabase backend for an e-ticketing helpd
 ✅ **Ticket Management**
 - Create, read, update, delete tickets
 - Ticket categorization and priority levels
-- Status tracking (open, in_progress, on_hold, closed, reopened)
+- Status tracking (open, assigned, in_progress, closed, reopened)
 - Ticket assignment to support staff
 - Comment count tracking
 

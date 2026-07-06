@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
   profile_image_url TEXT,
   is_active BOOLEAN DEFAULT TRUE,
   last_login TIMESTAMP,
+  reset_otp_hash VARCHAR(255),
+  reset_otp_expires_at TIMESTAMP
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
@@ -28,7 +30,7 @@ CREATE TABLE IF NOT EXISTS tickets (
   description TEXT NOT NULL,
   category VARCHAR(50) NOT NULL CHECK (category IN ('billing', 'technical', 'account', 'general', 'feature_request')),
   priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'critical')),
-  status VARCHAR(20) DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'on_hold', 'closed', 'reopened')),
+  status VARCHAR(20) DEFAULT 'open' CHECK (status IN ('open', 'assigned', 'in_progress', 'closed', 'reopened')),
   
   created_by_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   assigned_to_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -116,3 +118,22 @@ CREATE TABLE IF NOT EXISTS ticket_history (
 
 CREATE INDEX idx_ticket_history_ticket ON ticket_history(ticket_id);
 CREATE INDEX idx_ticket_history_changed_at ON ticket_history(changed_at DESC);
+
+-- Create notifications table
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  ticket_id UUID REFERENCES tickets(id) ON DELETE CASCADE,
+
+  type VARCHAR(50) NOT NULL CHECK (type IN ('ticket_assigned', 'status_changed', 'new_comment')),
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = FALSE;

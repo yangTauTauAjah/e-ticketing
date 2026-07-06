@@ -224,7 +224,7 @@ Additional supported parameters (not yet used in the Flutter UI):
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `page` | integer | Page number (default: `1`) |
-| `status` | string | Filter: `open`, `in_progress`, `on_hold`, `closed`, `reopened` |
+| `status` | string | Filter: `open`, `assigneds`, `in_progress`, `closed`, `reopened` |
 | `priority` | string | Filter: `low`, `medium`, `high`, `critical` |
 | `search` | string | Search in title and description |
 
@@ -276,7 +276,7 @@ GET /tickets?limit=10&sortBy=created_at&sortOrder=desc
 | `description` | `String` | |
 | `category` | `TicketCategory` enum | `billing`, `technical`, `account`, `general`, `feature_request` — backend sends snake_case, Flutter converts to camelCase enum |
 | `priority` | `TicketPriority` enum | `low`, `medium`, `high`, `critical` |
-| `status` | `TicketStatus` enum | `open`, `in_progress`, `on_hold`, `closed`, `reopened` |
+| `status` | `TicketStatus` enum | `open`, `assigned`, `in_progress`, `closed`, `reopened` |
 | `createdById` / `created_by_id` | `String` | Flutter accepts both casing |
 | `createdByName` / `created_by_name` | `String` | Flutter accepts both casing |
 | `assignedToId` / `assigned_to_id` | `String?` | Nullable |
@@ -416,7 +416,7 @@ Updates the status of a ticket. Only accessible to users with `admin` or `helpde
 
 | Field | Type | Required | Constraints |
 |-------|------|----------|-------------|
-| `status` | string | Yes (from Flutter) | `open`, `in_progress`, `on_hold`, `closed`, `reopened` |
+| `status` | string | Yes (from Flutter) | `open`, `assigned`, `in_progress`, `closed`, `reopened` |
 | `priority` | string | No | `low`, `medium`, `high`, `critical` |
 | `assignedToId` | UUID | No | ID of the helpdesk agent |
 

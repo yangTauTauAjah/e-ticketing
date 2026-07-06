@@ -95,7 +95,7 @@ CREATE TABLE tickets (
   description TEXT NOT NULL,
   category VARCHAR(50) NOT NULL CHECK (category IN ('billing', 'technical', 'account', 'general', 'feature_request')),
   priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'critical')),
-  status VARCHAR(20) DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'on_hold', 'closed', 'reopened')),
+  status VARCHAR(20) DEFAULT 'open' CHECK (status IN ('open', 'assigned', 'in_progress', 'closed', 'reopened')),
   
   created_by_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   assigned_to_id UUID REFERENCES users(id) ON DELETE SET NULL,

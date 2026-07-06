@@ -39,8 +39,8 @@ class TicketStats {
   factory TicketStats.fromJson(Map<String, dynamic> json) => TicketStats(
     total: (json['total'] ?? 0) as int,
     open: (json['open'] ?? 0) as int,
+    onHold: (json['assigned'] ?? 0) as int,
     inProgress: (json['in_progress'] ?? 0) as int,
-    onHold: (json['on_hold'] ?? 0) as int,
     closed: (json['closed'] ?? 0) as int,
     reopened: (json['reopened'] ?? 0) as int,
   );
