@@ -54,6 +54,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   riverpod_generator: ^4.0.3
   build_runner: ^2.13.1
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -97,3 +98,23 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  assets:
+    - assets/icon/icon.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    background_color: "#0B0B0F"
+    theme_color: "#0B0B0F"
+  windows:
+    generate: true
+    image_path: "assets/icon/icon.png"
+  macos:
+    generate: true
+    image_path: "assets/icon/icon.png"
