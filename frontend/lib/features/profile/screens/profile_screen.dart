@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -115,7 +116,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
 
-          // 3. New Performance Analytics Section
+          // 3. Performance Analytics Section: status breakdown donut + derived metrics
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -125,16 +126,11 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           statsAsync.when(
-            data: (stats) => Row(
-              children: [
-                _buildSmallStatCard(context, "TOTAL", "${stats.total}", textColor: colors.accent),
-                const SizedBox(width: 16),
-                _buildSmallStatCard(context, "OPEN", "${stats.open}", textColor: StatusColors.open),
-                const SizedBox(width: 16),
-                _buildSmallStatCard(context, "RESOLVED", "${stats.closed}", textColor: StatusColors.closed),
-              ],
+            data: (stats) => _buildAnalyticsCard(context, stats),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, _) => Center(
               child: Text("Analytics unavailable", style: TextStyle(color: colors.danger, fontSize: 12))
             ),
@@ -223,6 +219,142 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  // Builds the analytics hero card: a status-breakdown donut chart paired
+  // with a numerical legend, plus a row of derived KPI metrics
+  // (resolution rate, active load, reopen rate) computed from [stats].
+  Widget _buildAnalyticsCard(BuildContext context, TicketStats stats) {
+    final total = stats.total;
+    final resolutionRate = total > 0 ? (stats.closed / total * 100) : 0.0;
+    final active = stats.open + stats.inProgress + stats.onHold + stats.reopened;
+    final reopenRate = total > 0 ? (stats.reopened / total * 100) : 0.0;
+
+    final segments = <_StatusSegment>[
+      _StatusSegment("Open", stats.open, StatusColors.open),
+      _StatusSegment("Assigned", stats.onHold, StatusColors.assigned),
+      _StatusSegment("In Progress", stats.inProgress, StatusColors.inProgress),
+      _StatusSegment("Resolved", stats.closed, StatusColors.closed),
+      _StatusSegment("Reopened", stats.reopened, StatusColors.reopened),
+    ];
+
+    return Container(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: HeroCard.gradient,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: HeroCard.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (total == 0)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                "No tickets logged yet — analytics will appear once activity starts.",
+                style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: 116,
+                  width: 116,
+                  child: CustomPaint(
+                    painter: _DonutChartPainter(
+                      segments: segments,
+                      backgroundColor: Colors.white.withValues(alpha: 0.08),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "${resolutionRate.toStringAsFixed(0)}%",
+                            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                          const Text(
+                            "RESOLVED",
+                            style: TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.6),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: segments.map((s) => _buildLegendRow(s, total)).toList(),
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(height: 24),
+          Container(height: 1, color: Colors.white.withValues(alpha: 0.08)),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(child: _buildHeroMetric("TOTAL TICKETS", "$total", Colors.white)),
+              Expanded(child: _buildHeroMetric("ACTIVE LOAD", "$active", StatusColors.open)),
+              Expanded(child: _buildHeroMetric("REOPEN RATE", "${reopenRate.toStringAsFixed(0)}%", StatusColors.reopened)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendRow(_StatusSegment segment, int total) {
+    final pct = total > 0 ? (segment.value / total * 100) : 0.0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.5),
+      child: Row(
+        children: [
+          Container(
+            width: 8, height: 8,
+            decoration: BoxDecoration(color: segment.color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              segment.label.toUpperCase(),
+              style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Text("${segment.value}", style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 34,
+            child: Text(
+              "${pct.toStringAsFixed(0)}%",
+              textAlign: TextAlign.right,
+              style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroMetric(String label, String value, Color valueColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+        ),
+        const SizedBox(height: 4),
+        Text(value, style: TextStyle(color: valueColor, fontSize: 18, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
   Widget _buildProfileAction(BuildContext context, IconData icon, String title, String sub, {bool isDestructive = false, VoidCallback? onTap}) {
     final colors = context.colors;
     final color = isDestructive ? colors.danger : colors.textPrimary;
@@ -259,5 +391,66 @@ class ProfileScreen extends ConsumerWidget {
         trailing: Icon(LucideIcons.chevronRight, size: 22, color: colors.textDim),
       ),
     );
+  }
+}
+
+/// One slice of the ticket-status donut chart: how many tickets are in
+/// [label]'s status and which color represents it (sourced from [StatusColors]
+/// so it always matches the rest of the app).
+class _StatusSegment {
+  final String label;
+  final int value;
+  final Color color;
+
+  const _StatusSegment(this.label, this.value, this.color);
+}
+
+/// Paints a multi-segment ring chart proportional to each segment's value,
+/// used to visualize the ticket status breakdown without pulling in an
+/// external charting dependency.
+class _DonutChartPainter extends CustomPainter {
+  final List<_StatusSegment> segments;
+  final Color backgroundColor;
+
+  const _DonutChartPainter({required this.segments, required this.backgroundColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final total = segments.fold<int>(0, (sum, s) => sum + s.value);
+    final strokeWidth = size.width * 0.16;
+    final rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - strokeWidth,
+      size.height - strokeWidth,
+    );
+
+    final bgPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+    canvas.drawArc(rect, 0, 2 * math.pi, false, bgPaint);
+
+    if (total == 0) return;
+
+    // Leave a hairline gap between adjacent slices so they read as distinct.
+    const gap = 0.04;
+    var startAngle = -math.pi / 2;
+    for (final segment in segments) {
+      if (segment.value <= 0) continue;
+      final sweep = (segment.value / total) * (2 * math.pi - gap * segments.length);
+      final paint = Paint()
+        ..color = segment.color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(rect, startAngle, sweep, false, paint);
+      startAngle += sweep + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutChartPainter oldDelegate) {
+    return oldDelegate.segments != segments || oldDelegate.backgroundColor != backgroundColor;
   }
 }
